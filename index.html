@@ -1,0 +1,3390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#2563eb" />
+  <meta name="description" content="Cardlyo - Spaced Repetition Flashcards and Leitner Learning System" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon-192.svg" type="image/svg+xml" />
+  <title>Cardlyo</title>
+  <style>
+    /* ============================================
+       CSS RESET & BASE
+    ============================================ */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+
+    img, svg, video, canvas {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+    input, textarea, select, button {
+      font: inherit;
+      max-width: 100%;
+    }
+    textarea { resize: vertical; }
+
+    /* ============================================
+       THEME VARIABLES
+    ============================================ */
+    :root {
+      --bg: #f6f8fb;
+      --surface: #ffffff;
+      --surface-2: #f1f3f7;
+      --fg: #111827;
+      --fg-muted: #6b7280;
+      --fg-subtle: #9ca3af;
+      --border: #e5e7eb;
+      --border-subtle: #f3f4f6;
+      --primary: #2563eb;
+      --primary-glow: rgba(37, 99, 235, 0.12);
+      --primary-dark: #1d4ed8;
+      --success: #10b981;
+      --success-soft: #ecfdf5;
+      --danger: #ef4444;
+      --danger-soft: #fef2f2;
+      --warning: #f59e0b;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 14px rgba(0,0,0,0.06);
+      --shadow-lg: 0 16px 40px rgba(0,0,0,0.08);
+      --radius-sm: 10px;
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --font-body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-display: ui-serif, Georgia, "Times New Roman", serif;
+      --transition: 220ms ease;
+    }
+
+    [data-theme="dark"] {
+      --bg: #0b0d12;
+      --surface: #131620;
+      --surface-2: #181b26;
+      --fg: #f0f2f5;
+      --fg-muted: #9aa0b5;
+      --fg-subtle: #5c6375;
+      --border: #23273a;
+      --border-subtle: #1a1d28;
+      --primary: #3b82f6;
+      --primary-glow: rgba(59, 130, 246, 0.15);
+      --primary-dark: #60a5fa;
+      --success: #34d399;
+      --success-soft: rgba(52, 211, 153, 0.08);
+      --danger: #f87171;
+      --danger-soft: rgba(248, 113, 113, 0.08);
+      --warning: #fbbf24;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.25);
+      --shadow-md: 0 4px 14px rgba(0,0,0,0.35);
+      --shadow-lg: 0 16px 40px rgba(0,0,0,0.45);
+    }
+
+    /* ============================================
+       LAYOUT & HEADER
+    ============================================ */
+    body {
+      font-family: var(--font-body);
+      background-color: var(--bg);
+      color: var(--fg);
+      min-height: 100vh;
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: background-color var(--transition), color var(--transition);
+    }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(14px) saturate(1.4);
+      -webkit-backdrop-filter: blur(14px) saturate(1.4);
+      background: rgba(255,255,255,0.78);
+      border-bottom: 1px solid var(--border);
+      padding: 0 1.75rem;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    [data-theme="dark"] .site-header {
+      background: rgba(11,13,18,0.85);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.35rem;
+      letter-spacing: -0.025em;
+      color: var(--fg);
+      text-decoration: none;
+      user-select: none;
+      flex-shrink: 0;
+    }
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary) 0%, #6366f1 100%);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 1.1rem;
+      box-shadow: 0 3px 10px var(--primary-glow);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: nowrap;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.55rem 1rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--fg);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 120ms ease, box-shadow var(--transition), background var(--transition), border-color var(--transition);
+      box-shadow: var(--shadow-sm);
+      text-decoration: none;
+      user-select: none;
+      white-space: nowrap;
+    }
+    .btn:hover {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow);
+      transform: translateY(-1px);
+    }
+    .btn:active { transform: translateY(0); }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary) 0%, #6366f1 100%);
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 4px 14px var(--primary-glow);
+    }
+    .btn-primary:hover {
+      box-shadow: 0 6px 20px var(--primary-glow);
+      border-color: transparent;
+    }
+    .btn-danger {
+      background: var(--danger-soft);
+      color: var(--danger);
+      border-color: rgba(239,68,68,0.2);
+    }
+    .btn-danger:hover {
+      border-color: var(--danger);
+      box-shadow: 0 0 0 3px rgba(239,68,68,0.15);
+    }
+    .btn-sm { padding: 0.4rem 0.75rem; font-size: 0.82rem; }
+
+    .btn-icon {
+      display: inline-grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--fg-muted);
+      cursor: pointer;
+      transition: all var(--transition);
+      flex-shrink: 0;
+    }
+    .btn-icon:hover {
+      border-color: var(--primary);
+      color: var(--fg);
+      background: var(--surface-2);
+    }
+
+    /* Main Layout */
+    .main-wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+      flex: 1;
+      width: 100%;
+      min-width: 0;
+    }
+
+    .section-title,
+    .stack-title,
+    .stack-view-description,
+    .dashboard-stack-title,
+    .dashboard-stack-description,
+    .test-question,
+    .bulk-preview-q,
+    .bulk-preview-a {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    /* Search & Filter Bar */
+    .search-filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .search-input-wrap {
+      flex: 1;
+      min-width: 220px;
+      position: relative;
+    }
+    .search-input-wrap input {
+      width: 100%;
+      padding: 0.65rem 1rem 0.65rem 2.4rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--fg);
+      font-size: 0.9rem;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .search-input-wrap input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow);
+    }
+    .search-input-wrap .search-icon {
+      position: absolute;
+      left: 0.85rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--fg-subtle);
+      pointer-events: none;
+      font-size: 0.95rem;
+    }
+    .filter-select {
+      padding: 0.65rem 1rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--fg);
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .filter-select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow);
+    }
+
+    /* Section Titles */
+    .section-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 1.55rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .section-sub {
+      font-size: 0.88rem;
+      color: var(--fg-muted);
+      margin-top: 0.15rem;
+    }
+    .section-heading-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    /* Stack & Library Grids */
+    .dashboard-grid, .library-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.15rem;
+    }
+
+    .dashboard-stack {
+      position: relative;
+      width: 100%;
+      min-height: 145px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      color: var(--fg);
+      box-shadow: var(--shadow-sm);
+      transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+    }
+    .dashboard-stack:hover,
+    .dashboard-stack:focus-within {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow), var(--shadow-md);
+      transform: translateY(-2px);
+    }
+    .dashboard-stack-open {
+      display: block;
+      width: 100%;
+      height: 100%;
+      padding: 1.4rem 3.2rem 1.4rem 1.4rem;
+      text-align: left;
+      border: 0;
+      border-radius: inherit;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
+    }
+    .dashboard-stack-open:focus-visible { outline: none; }
+    .dashboard-stack.dragging { opacity: 0.45; }
+
+    .stack-kebab {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 2;
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface-2);
+      color: var(--fg-muted);
+      font-size: 1.15rem;
+      line-height: 1;
+      cursor: pointer;
+      transition: background var(--transition), border-color var(--transition), color var(--transition);
+    }
+    .stack-kebab:hover,
+    .stack-kebab:focus-visible {
+      outline: none;
+      border-color: var(--primary);
+      background: var(--surface);
+      color: var(--fg);
+    }
+
+    .dashboard-stack-title {
+      display: block;
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin-bottom: 0.5rem;
+    }
+    .dashboard-stack-description {
+      display: block;
+      color: var(--fg-muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    .dashboard-stack-badge {
+      display: inline-block;
+      margin-top: 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--fg-muted);
+      background: var(--surface-2);
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+    }
+
+    /* Library Box */
+    .library-box {
+      position: relative;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
+      transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+    }
+    .library-box::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 16px;
+      bottom: 16px;
+      width: 4px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, var(--primary), #6366f1);
+    }
+    .library-box:hover,
+    .library-box:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow), var(--shadow-md);
+      transform: translateY(-2px);
+    }
+    .library-box.drag-over {
+      border-color: var(--primary);
+      border-style: dashed;
+      box-shadow: 0 0 0 3px var(--primary-glow), var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .library-open {
+      display: flex;
+      align-items: center;
+      gap: 1.1rem;
+      width: 100%;
+      padding: 1.15rem 1.25rem;
+      border: 0;
+      border-radius: inherit;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+    .library-open:focus-visible { outline: none; }
+    .library-icon {
+      font-size: 2rem;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .library-text {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      min-width: 0;
+    }
+    .library-title {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+      color: var(--fg);
+      overflow-wrap: anywhere;
+    }
+    .library-description {
+      font-size: 0.85rem;
+      color: var(--fg-muted);
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+    .library-stack-count {
+      align-self: flex-start;
+      margin-top: 0.2rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--primary);
+      background: var(--primary-glow);
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+    }
+
+    /* Stack View */
+    .stack-view-back { margin-bottom: 1.25rem; }
+    .stack-view-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1.5rem;
+      padding-bottom: 1.25rem;
+      margin-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .stack-view-description {
+      max-width: 650px;
+      margin-top: 0.45rem;
+      color: var(--fg-muted);
+      line-height: 1.55;
+    }
+    .stack-view-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .stack-card-count {
+      color: var(--fg-muted);
+      font-size: 0.88rem;
+      white-space: nowrap;
+      padding-top: 0.25rem;
+    }
+
+    /* Cards Table */
+    .cards-table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      max-width: 100%;
+      box-shadow: var(--shadow-md);
+      margin-top: 1rem;
+    }
+    table.cards-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    table.cards-table thead {
+      background: var(--surface-2);
+      color: var(--fg-muted);
+      text-align: left;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-size: 0.75rem;
+    }
+    table.cards-table th, table.cards-table td {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    table.cards-table tbody tr:hover { background: var(--surface-2); }
+    .table-cell-content {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      justify-content: space-between;
+    }
+    .table-cell-text {
+      flex: 1;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .meta-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.25rem 0.7rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--fg-muted);
+      white-space: nowrap;
+    }
+    .meta-badge.success { color: var(--success); border-color: rgba(16,185,129,0.2); background: var(--success-soft); }
+    .meta-badge.danger { color: var(--danger); border-color: rgba(239,68,68,0.2); background: var(--danger-soft); }
+
+    /* Leitner Stat Boxes */
+    .stat-boxes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .stat-box {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.3rem;
+      width: 100%;
+      padding: 1.25rem 1.4rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
+      color: var(--fg);
+      font-family: inherit;
+      text-align: left;
+    }
+    .stat-box-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--fg-muted);
+    }
+    .stat-box-value {
+      font-family: var(--font-display);
+      font-size: 2.1rem;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+    .stat-box-hint {
+      font-size: 0.76rem;
+      color: var(--fg-subtle);
+    }
+    .stat-box-correct {
+      border-color: rgba(16,185,129,0.35);
+      background: var(--success-soft);
+    }
+    .stat-box-correct .stat-box-value { color: var(--success); }
+    .stat-box-wrong {
+      border-color: rgba(239,68,68,0.35);
+      background: var(--danger-soft);
+      cursor: pointer;
+      transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+    }
+    .stat-box-wrong .stat-box-value { color: var(--danger); }
+    .stat-box-wrong:not(.is-disabled):hover,
+    .stat-box-wrong:not(.is-disabled):focus-visible {
+      outline: none;
+      border-color: var(--danger);
+      box-shadow: 0 0 0 3px rgba(239,68,68,0.18), var(--shadow-md);
+      transform: translateY(-2px);
+    }
+    .stat-box-wrong.is-disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+      background: var(--surface-2);
+      border-color: var(--border);
+      box-shadow: none;
+      transform: none;
+    }
+    .stat-box-wrong.is-disabled .stat-box-value { color: var(--fg-subtle); }
+
+    /* Flashcard Review */
+    .flashcard-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      display: grid;
+      place-items: center;
+      padding: 1.5rem;
+      background: rgba(11,13,18,0.88);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .flashcard-session {
+      width: min(100%, 590px);
+      color: var(--fg);
+    }
+    .flashcard-session-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      color: var(--fg-muted);
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+    .flashcard-top-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .flashcard-scene {
+      width: 100%;
+      min-height: 330px;
+      perspective: 1200px;
+    }
+    .flashcard-surface {
+      display: block;
+      width: 100%;
+      min-height: 330px;
+      padding: 0;
+      border: 0;
+      border-radius: var(--radius-lg);
+      background: transparent;
+      cursor: pointer;
+      color: var(--fg);
+      transform: translateX(0) rotate(0deg);
+      transition: transform 360ms cubic-bezier(.2,.8,.2,1), opacity 360ms ease;
+    }
+    .flashcard-surface:focus-visible {
+      outline: 3px solid var(--primary);
+      outline-offset: 5px;
+    }
+    .flashcard-surface.slide-left {
+      opacity: 0;
+      transform: translateX(-115%) rotate(-7deg);
+    }
+    .flashcard-surface.slide-right {
+      opacity: 0;
+      transform: translateX(115%) rotate(7deg);
+    }
+    .flashcard-inner {
+      display: block;
+      position: relative;
+      width: 100%;
+      min-height: 330px;
+      transform-style: preserve-3d;
+      transition: transform 460ms cubic-bezier(.2,.75,.25,1);
+    }
+    .flashcard-surface.is-flipped .flashcard-inner { transform: rotateY(180deg); }
+    .flashcard-face {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      box-shadow: var(--shadow-lg);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+    .flashcard-face-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .flashcard-face-label {
+      color: var(--fg-subtle);
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .flashcard-tts-btn {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: var(--fg-muted);
+      transition: all var(--transition);
+    }
+    .flashcard-tts-btn:hover {
+      color: var(--primary);
+      border-color: var(--primary);
+    }
+    .flashcard-face-text {
+      max-width: 100%;
+      overflow-wrap: anywhere;
+      font-family: var(--font-display);
+      font-size: clamp(1.7rem, 7vw, 2.7rem);
+      font-weight: 700;
+      line-height: 1.18;
+      letter-spacing: -0.025em;
+      text-align: center;
+    }
+    .flashcard-back {
+      background: var(--surface-2);
+      transform: rotateY(180deg);
+    }
+    .flashcard-hint {
+      margin: 1rem 0;
+      color: var(--fg-subtle);
+      font-size: 0.85rem;
+      text-align: center;
+    }
+    .flashcard-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    .flashcard-decision {
+      min-height: 50px;
+      border-radius: var(--radius-sm);
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform var(--transition), filter var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    .flashcard-decision:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    .flashcard-decision:disabled { cursor: default; opacity: 0.6; transform: none; }
+    .flashcard-dont-know { border: 1px solid var(--danger); background: var(--danger); }
+    .flashcard-know { border: 1px solid var(--success); background: var(--success); }
+
+    .flashcard-summary {
+      padding: 2.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      color: var(--fg);
+      text-align: center;
+      box-shadow: var(--shadow-lg);
+    }
+    .flashcard-summary h2 {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.6rem;
+    }
+    .flashcard-summary p { color: var(--fg-muted); margin-bottom: 1.5rem; }
+
+    /* Test Mode */
+    .test-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      background: rgba(11,13,18,0.85);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    [data-theme="dark"] .test-overlay { background: rgba(11,13,18,0.92); }
+
+    .test-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem;
+      max-width: 540px;
+      width: 100%;
+      box-shadow: var(--shadow-lg);
+      position: relative;
+      animation: fadeUp 300ms ease;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .test-progress {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.85rem;
+      color: var(--fg-muted);
+      font-weight: 500;
+    }
+    .test-progress-bar {
+      flex: 1;
+      height: 6px;
+      background: var(--surface-2);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .test-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--primary), #6366f1);
+      border-radius: 999px;
+      transition: width var(--transition);
+    }
+    .test-q-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+    }
+    .test-question {
+      font-family: var(--font-display);
+      font-size: 1.75rem;
+      font-weight: 700;
+      line-height: 1.25;
+      letter-spacing: -0.02em;
+    }
+    .test-options {
+      display: grid;
+      gap: 0.75rem;
+    }
+    .test-option-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      text-align: left;
+      padding: 1rem 1.25rem;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border);
+      background: var(--surface-2);
+      color: var(--fg);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition);
+      gap: 0.75rem;
+    }
+    .test-option-btn:hover:not(:disabled) {
+      border-color: var(--primary);
+      background: rgba(37,99,235,0.06);
+    }
+    .test-option-btn:disabled { opacity: 0.5; cursor: default; }
+    .test-option-btn.correct-guess {
+      border-color: var(--success);
+      background: var(--success-soft);
+      color: var(--success);
+    }
+    .test-option-btn.wrong-guess {
+      border-color: var(--danger);
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+    .test-key-tag {
+      font-size: 0.75rem;
+      font-family: monospace;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--fg-muted);
+    }
+
+    .test-results { text-align: center; padding-top: 0.5rem; }
+    .test-results h3 { font-family: var(--font-display); font-size: 1.3rem; margin-bottom: 0.5rem; }
+    .test-results p { color: var(--fg-muted); margin-bottom: 1.5rem; }
+    .score-ring {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: 8px solid var(--primary);
+      display: grid;
+      place-items: center;
+      margin: 0 auto 1.5rem;
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .test-exit-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 0.9rem;
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 400;
+      background: rgba(11,13,18,0.65);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      overflow-y: auto;
+      animation: fadeIn 180ms ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      max-width: 480px;
+      width: 100%;
+      max-height: 100%;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      box-shadow: var(--shadow-lg);
+      animation: fadeUp 220ms ease;
+    }
+    .modal h2 {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .modal input, .modal textarea, .modal select {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--fg);
+      font-size: 0.95rem;
+      margin-bottom: 0.75rem;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .modal input:focus, .modal textarea:focus, .modal select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow);
+    }
+    .modal .btn-row {
+      display: flex;
+      gap: 0.6rem;
+      justify-content: flex-end;
+      margin-top: 0.5rem;
+    }
+
+    .alert-modal {
+      background: var(--surface);
+      border: 1.5px solid var(--danger);
+      border-radius: var(--radius-md);
+      padding: 1.5rem 2rem;
+      max-width: 440px;
+      text-align: center;
+    }
+    .alert-modal h3 { color: var(--danger); font-family: var(--font-display); margin-bottom: 0.25rem; }
+    .alert-modal p { color: var(--fg-muted); }
+
+    /* Bulk Import */
+    .bulk-label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--fg-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.35rem;
+    }
+    .bulk-textarea {
+      width: 100%;
+      min-height: 140px;
+      max-height: 280px;
+      padding: 0.85rem 1rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--fg);
+      font-family: var(--font-body);
+      font-size: 0.92rem;
+      line-height: 1.55;
+      resize: vertical;
+      margin-bottom: 0.85rem;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .bulk-sep-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-bottom: 0.85rem;
+    }
+    .bulk-sep-field input {
+      width: 100%;
+      padding: 0.6rem 0.85rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--fg);
+      font-size: 0.92rem;
+      font-family: monospace;
+      text-align: center;
+      margin-bottom: 0;
+    }
+    .bulk-sep-hint { font-size: 0.72rem; color: var(--fg-subtle); margin-top: 0.2rem; }
+    .bulk-preview {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    .bulk-preview-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--fg-subtle);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .bulk-preview-count {
+      font-weight: 700;
+      color: var(--primary);
+      background: var(--primary-glow);
+      padding: 0.1rem 0.45rem;
+      border-radius: 999px;
+      font-size: 0.72rem;
+    }
+    .bulk-preview-empty { color: var(--fg-subtle); font-size: 0.85rem; font-style: italic; }
+    .bulk-preview-item {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+      padding: 0.3rem 0;
+      font-size: 0.85rem;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .bulk-preview-item:last-child { border-bottom: none; }
+    .bulk-preview-q { font-weight: 700; color: var(--fg); min-width: 0; flex: 1; }
+    .bulk-preview-arrow { color: var(--fg-subtle); flex-shrink: 0; }
+    .bulk-preview-a { color: var(--success); font-weight: 600; min-width: 0; flex: 1; text-align: right; }
+    .bulk-preview-invalid { color: var(--danger); font-size: 0.8rem; opacity: 0.7; text-decoration: line-through; }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 0.35rem;
+      padding: 0.3rem;
+      margin-bottom: 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface-2);
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 0.6rem 0.9rem;
+      border: 0;
+      border-radius: calc(var(--radius-sm) - 3px);
+      background: transparent;
+      color: var(--fg-muted);
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background var(--transition), color var(--transition), box-shadow var(--transition);
+    }
+    .tab-btn:hover { color: var(--fg); }
+    .tab-btn.active {
+      background: var(--surface);
+      color: var(--fg);
+      box-shadow: var(--shadow-sm);
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; animation: fadeIn 200ms ease; }
+
+    /* Inline Metadata Edit */
+    .editable-meta-wrap { display: flex; align-items: flex-start; gap: 0.6rem; flex-wrap: wrap; }
+    .meta-edit-toggle {
+      display: inline-grid;
+      place-items: center;
+      width: 34px; height: 34px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--fg-muted);
+      cursor: pointer;
+      font-size: 1.05rem;
+      flex-shrink: 0;
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .meta-edit-toggle:hover,
+    .meta-edit-toggle:focus-visible {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow);
+    }
+    .meta-edit-form { display: none; flex-direction: column; gap: 0.65rem; width: 100%; }
+    .meta-edit-form.active { display: flex; animation: fadeIn 180ms ease; }
+    .meta-edit-actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
+
+    /* Manage Card Modal */
+    .manage-card-section {
+      padding: 1.15rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface-2);
+      margin-bottom: 1rem;
+    }
+    .manage-card-section:last-child { margin-bottom: 0; }
+    .manage-card-section-title {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--fg-muted);
+      margin-bottom: 0.75rem;
+    }
+    .danger-zone {
+      border-color: rgba(239,68,68,0.35);
+      background: var(--danger-soft);
+    }
+    .danger-zone p {
+      font-size: 0.85rem;
+      color: var(--fg-muted);
+      margin-bottom: 0.85rem;
+      line-height: 1.5;
+    }
+    .danger-zone .confirm-row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.5rem;
+    }
+    .danger-zone .confirm-warning {
+      font-size: 0.82rem;
+      color: var(--danger);
+      font-weight: 700;
+      margin-right: auto;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--success);
+      color: #fff;
+      padding: 0.75rem 1.5rem;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      box-shadow: 0 8px 30px rgba(16,185,129,0.3);
+      z-index: 500;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 280ms ease, transform 280ms ease;
+    }
+    .toast.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--fg-muted);
+    }
+    .empty-state h3 { font-family: var(--font-display); margin-bottom: 0.25rem; }
+
+    .site-footer {
+      border-top: 1px solid var(--border);
+      padding: 1.5rem 2rem;
+      text-align: center;
+      color: var(--fg-subtle);
+      font-size: 0.85rem;
+      margin-top: auto;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .site-header {
+        height: auto;
+        min-height: 64px;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        padding: 0.75rem 1rem;
+      }
+      .logo { font-size: 1.15rem; }
+      .header-actions {
+        width: 100%;
+        justify-content: space-between;
+        order: 3;
+      }
+      .header-actions .btn {
+        flex: 1 1 auto;
+        min-height: 42px;
+        padding: 0.45rem;
+        font-size: 0.76rem;
+      }
+      .main-wrap { padding: 1.25rem 1rem; }
+      .dashboard-grid, .library-grid { grid-template-columns: 1fr; }
+      .stat-boxes { grid-template-columns: 1fr; }
+      .modal-backdrop { padding: 0.75rem; align-items: flex-start; }
+      .modal { max-width: 100%; padding: 1.25rem; }
+      .flashcard-overlay { padding: 0.75rem; }
+      .flashcard-scene, .flashcard-surface, .flashcard-inner {
+        height: clamp(220px, 48vh, 400px);
+        min-height: 0;
+      }
+      .flashcard-face-text { font-size: clamp(1.4rem, 8vw, 2.1rem); }
+      .stack-view-header { flex-direction: column; align-items: flex-start; }
+      .stack-view-actions .btn { width: 100%; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ============================================
+       HEADER
+  ============================================ -->
+  <header class="site-header" role="banner">
+    <a href="#" class="logo" onclick="resetHome(); return false;" aria-label="Cardlyo Home">
+      <span class="logo-icon" aria-hidden="true">◈</span>
+      <span>Cardlyo</span>
+    </a>
+    
+    <nav class="header-actions" aria-label="Global actions">
+      <button class="btn btn-sm" onclick="triggerImport()" aria-label="Upload state file" title="Upload JSON">
+        <span aria-hidden="true">↑</span> <span data-i18n="upload">Upload</span>
+      </button>
+      <button class="btn btn-sm" onclick="triggerDownload()" aria-label="Download state file" title="Download JSON">
+        <span aria-hidden="true">↓</span> <span data-i18n="download">Download</span>
+      </button>
+      <button class="btn btn-sm" onclick="toggleLanguage()" aria-label="Toggle language" title="Language">
+        <span aria-hidden="true">🌐</span> <span id="lang-label">TR</span>
+      </button>
+      <button class="btn btn-sm" onclick="toggleTheme()" aria-label="Toggle dark mode" title="Toggle Theme">
+        <span id="theme-icon" aria-hidden="true">◑</span> <span id="theme-label" data-i18n="theme">Dark</span>
+      </button>
+    </nav>
+    <input type="file" id="import-file" accept=".json,application/json" style="display:none" onchange="handleImportFile(this)" aria-label="Upload JSON file" />
+  </header>
+
+  <main class="main-wrap" id="app-root" role="main">
+    <!-- Dynamic Content -->
+  </main>
+
+  <footer class="site-footer" role="contentinfo">
+    Cardlyo — <span data-i18n="tagline">Spaced Repetition Reimagined</span>
+  </footer>
+
+  <!-- ============================================
+       JAVASCRIPT APPLICATION
+  ============================================ -->
+  <script>
+    // ============================================================
+    // INTERNATIONALIZATION (i18n)
+    // ============================================================
+    const translations = {
+      en: {
+        upload: "Upload",
+        download: "Download",
+        theme: "Dark",
+        themeLight: "Light",
+        tagline: "Spaced Repetition Reimagined",
+        libraries: "Libraries",
+        newLibrary: "+ New Library",
+        librariesSub: "Group related stacks into folders",
+        noLibraries: "No libraries yet. Create one to organize your stacks into folders.",
+        stacks: "Stacks",
+        addStack: "+ Add Stack",
+        stacksSub: "Drag a stack onto a library to file it away",
+        noStacksTitle: "No stacks yet",
+        noStacksDesc: "Create your first flashcard deck to begin.",
+        createStackBtn: "Create Stack",
+        searchPlaceholder: "Search stacks and libraries...",
+        searchCardsPlaceholder: "Search front or back text...",
+        filterAll: "All Cards",
+        filterCorrect: "Correct Box",
+        filterWrong: "Wrong Box",
+        filterUntested: "Untested",
+        backToDashboard: "← Back to Dashboard",
+        backToLibrary: "← Back to Library",
+        noDescription: "No description provided.",
+        correctCards: "Correct Cards",
+        wrongCards: "Wrong Cards",
+        clickToReview: "click for reviewing",
+        addCard: "+ Add Card",
+        startTest: "Start Test",
+        startFlashcards: "Start Flashcards",
+        exportStack: "Export JSON",
+        exportCsv: "Export CSV",
+        duplicateStack: "Duplicate Stack",
+        deleteStack: "Delete Stack",
+        cardsCount: "cards",
+        front: "Front",
+        back: "Back",
+        status: "Status",
+        action: "Action",
+        edit: "✎ Edit",
+        noCardsYet: "No cards yet. Use Add Card to begin.",
+        noMatchingCards: "No cards match the current search or filter.",
+        singleCard: "Single Card",
+        bulkImport: "Bulk Import",
+        csvFileImport: "CSV / TSV Import",
+        importFileBtn: "Choose CSV File",
+        cardSideSep: "Card Side Separator",
+        nextCardSep: "Next Card Separator",
+        sepHintSide: "Splits front and back",
+        sepHintNext: "Empty uses a new line",
+        preview: "Preview",
+        addCardsTitle: "Add Cards",
+        importCardsBtn: "Import Cards",
+        cancel: "Cancel",
+        save: "Save",
+        create: "Create",
+        delete: "Delete",
+        cardUpdated: "Card updated",
+        cardDeleted: "Card deleted",
+        cardsImported: "cards imported",
+        stackMoved: "Stack moved to library",
+        stackRemoved: "Stack removed from library",
+        stackDuplicated: "Stack duplicated successfully",
+        undone: "Action undone",
+        testSession: "Test Session",
+        reviewWrongCards: "Review Wrong Cards",
+        testMode: "Test Mode",
+        flashcardMode: "Flashcard Mode",
+        configureFlashcards: "Configure Flashcards",
+        configureTest: "Configure Test",
+        order: "Order",
+        orderSeq: "Sequential (List Order)",
+        orderRand: "Randomized",
+        firstFace: "First Face",
+        exit: "Exit",
+        endReview: "End Review",
+        undo: "↩ Undo (Z)",
+        flipHint: "Tap card to flip (Space). Swipe or press ← / →",
+        dontKnow: "Don't Know (1 / ←)",
+        know: "Know (2 / →)",
+        reviewComplete: "Review Complete",
+        sessionComplete: "Session Complete",
+        returnToStack: "Return to Stack View",
+        restartTest: "Restart Test",
+        minCardsError: "Test requires a minimum of 2 cards.",
+        minFlashcardError: "Flashcard mode requires at least one card."
+      },
+      tr: {
+        upload: "Yükle",
+        download: "İndir",
+        theme: "Koyu",
+        themeLight: "Açık",
+        tagline: "Aralıklı Tekrar ile Hızlı Öğrenme",
+        libraries: "Kütüphaneler",
+        newLibrary: "+ Yeni Kütüphane",
+        librariesSub: "Destelerinizi klasörler halinde düzenleyin",
+        noLibraries: "Henüz kütüphane yok. Desteleri gruplamak için bir tane oluşturun.",
+        stacks: "Desteler",
+        addStack: "+ Deste Ekle",
+        stacksSub: "Bir desteyi taşımak için kütüphane üzerine sürükleyin",
+        noStacksTitle: "Henüz deste yok",
+        noStacksDesc: "Öğrenmeye başlamak için ilk flashcard destenizi oluşturun.",
+        createStackBtn: "Deste Oluştur",
+        searchPlaceholder: "Deste veya kütüphane ara...",
+        searchCardsPlaceholder: "Ön veya arka yüzde ara...",
+        filterAll: "Tüm Kartlar",
+        filterCorrect: "Doğru Kutusu",
+        filterWrong: "Yanlış Kutusu",
+        filterUntested: "Test Edilmemiş",
+        backToDashboard: "← Ana Sayfaya Dön",
+        backToLibrary: "← Kütüphaneye Dön",
+        noDescription: "Açıklama girilmedi.",
+        correctCards: "Doğru Kartlar",
+        wrongCards: "Yanlış Kartlar",
+        clickToReview: "tekrar etmek için tıkla",
+        addCard: "+ Kart Ekle",
+        startTest: "Test Başlat",
+        startFlashcards: "Flashcard Başlat",
+        exportStack: "JSON İndir",
+        exportCsv: "CSV İndir",
+        duplicateStack: "Desteyi Çoğalt",
+        deleteStack: "Desteyi Sil",
+        cardsCount: "kart",
+        front: "Ön Yüz",
+        back: "Arka Yüz",
+        status: "Durum",
+        action: "İşlem",
+        edit: "✎ Düzenle",
+        noCardsYet: "Henüz kart yok. Başlamak için Kart Ekle'yi kullanın.",
+        noMatchingCards: "Arama veya filtreye uygun kart bulunamadı.",
+        singleCard: "Tek Kart",
+        bulkImport: "Toplu Metin İçe Aktar",
+        csvFileImport: "CSV / TSV İçe Aktar",
+        importFileBtn: "CSV Dosyası Seç",
+        cardSideSep: "Ön/Arka Ayracı",
+        nextCardSep: "Sonraki Kart Ayracı",
+        sepHintSide: "Ön ve arkayı ayırır",
+        sepHintNext: "Boş bırakılırsa yeni satır",
+        preview: "Önizleme",
+        addCardsTitle: "Kart Ekle",
+        importCardsBtn: "Kartları İçe Aktar",
+        cancel: "İptal",
+        save: "Kaydet",
+        create: "Oluştur",
+        delete: "Sil",
+        cardUpdated: "Kart güncellendi",
+        cardDeleted: "Kart silindi",
+        cardsImported: "kart içe aktarıldı",
+        stackMoved: "Deste kütüphaneye taşındı",
+        stackRemoved: "Deste kütüphaneden çıkarıldı",
+        stackDuplicated: "Deste başarıyla çoğaltıldı",
+        undone: "İşlem geri alındı",
+        testSession: "Test Oturumu",
+        reviewWrongCards: "Yanlış Kartları Tekrar Et",
+        testMode: "Test Modu",
+        flashcardMode: "Flashcard Modu",
+        configureFlashcards: "Flashcard Ayarları",
+        configureTest: "Test Ayarları",
+        order: "Sıralama",
+        orderSeq: "Sıralı (Liste Sırası)",
+        orderRand: "Karışık (Rastgele)",
+        firstFace: "İlk Gösterilecek Yüz",
+        exit: "Çıkış",
+        endReview: "Oturumu Bitir",
+        undo: "↩ Geri Al (Z)",
+        flipHint: "Çevirmek için tıkla (Space). Kaydır veya ← / → tuşlarını kullan",
+        dontKnow: "Bilmiyorum (1 / ←)",
+        know: "Biliyorum (2 / →)",
+        reviewComplete: "Tekrar Tamamlandı",
+        sessionComplete: "Oturum Tamamlandı",
+        returnToStack: "Deste Görünümüne Dön",
+        restartTest: "Testi Yeniden Başlat",
+        minCardsError: "Test için en az 2 kart gereklidir.",
+        minFlashcardError: "Flashcard için en az 1 kart gereklidir."
+      }
+    };
+
+    let currentLang = localStorage.getItem("cardlyo_lang") || (navigator.language && navigator.language.startsWith("tr") ? "tr" : "en");
+
+    function t(key) {
+      const dict = translations[currentLang] || translations.en;
+      return dict[key] || translations.en[key] || key;
+    }
+
+    function toggleLanguage() {
+      currentLang = currentLang === "en" ? "tr" : "en";
+      localStorage.setItem("cardlyo_lang", currentLang);
+      document.getElementById("lang-label").textContent = currentLang === "en" ? "TR" : "EN";
+      applyStaticI18n();
+      if (currentLibraryId) openLibraryDetail(currentLibraryId);
+      else if (activeStackDetailId) openStackDetail(activeStackDetailId);
+      else renderApp();
+    }
+
+    function applyStaticI18n() {
+      document.querySelectorAll("[data-i18n]").forEach(el => {
+        const key = el.dataset.i18n;
+        if (key && translations[currentLang] && translations[currentLang][key]) {
+          el.textContent = translations[currentLang][key];
+        }
+      });
+      document.getElementById("lang-label").textContent = currentLang === "en" ? "TR" : "EN";
+    }
+
+    // ============================================================
+    // STATE MANAGEMENT
+    // ============================================================
+    let state = {
+      stacks: [],
+      libraries: []
+    };
+
+    let currentLibraryId = null;
+    let activeStackDetailId = null;
+    let draggedStackId = null;
+
+    // Search queries & filters
+    let dashboardSearchQuery = "";
+    let stackSearchQuery = "";
+    let stackStatusFilter = "all";
+
+    // ============================================================
+    // THEME MANAGEMENT
+    // ============================================================
+    const themeStorageKey = "cardlyo_theme";
+    function initTheme() {
+      const saved = localStorage.getItem(themeStorageKey);
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const useDark = saved === "dark" || (!saved && prefersDark);
+      document.documentElement.setAttribute("data-theme", useDark ? "dark" : "light");
+      updateThemeLabel(useDark);
+    }
+    function toggleTheme() {
+      const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+      const next = isDark ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      localStorage.setItem(themeStorageKey, next);
+      updateThemeLabel(!isDark);
+    }
+    function updateThemeLabel(isDark) {
+      const label = document.getElementById("theme-label");
+      if (label) label.textContent = isDark ? t("themeLight") : t("theme");
+      const icon = document.getElementById("theme-icon");
+      if (icon) icon.textContent = isDark ? "◐" : "◑";
+    }
+
+    // ============================================================
+    // TEXT-TO-SPEECH (TTS)
+    // ============================================================
+    function speakText(text, lang = null) {
+      if (!('speechSynthesis' in window) || !text) return;
+      window.speechSynthesis.cancel(); // cancel previous
+      const utterance = new SpeechSynthesisUtterance(text);
+      if (lang) utterance.lang = lang;
+      else if (/[\u00C0-\u017F]/.test(text)) utterance.lang = "es-ES";
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // ============================================================
+    // UTILITIES & PERSISTENCE
+    // ============================================================
+    function generateId(prefix = "id") {
+      return prefix + "_" + Math.random().toString(36).slice(2, 11) + Date.now().toString(36).slice(-4);
+    }
+
+    function escapeHtml(str) {
+      if (typeof str !== "string") return "";
+      const div = document.createElement("div");
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    const STORAGE_KEY = "cardlyo_data";
+
+    function persistState() {
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {}
+    }
+
+    function migrateState(parsed) {
+      if (!Array.isArray(parsed.libraries)) parsed.libraries = [];
+      parsed.libraries = parsed.libraries.filter(l => l && l.id && l.title);
+      parsed.libraries.forEach(lib => {
+        if (typeof lib.description !== "string") lib.description = "";
+      });
+      parsed.stacks.forEach(s => {
+        if (typeof s.libraryId === "undefined" || s.libraryId === "") s.libraryId = null;
+        if (typeof s.description !== "string") s.description = s.description || "";
+        if (!Array.isArray(s.cards)) s.cards = [];
+        if (!Array.isArray(s.correctBox)) s.correctBox = [];
+        if (!Array.isArray(s.wrongBox)) s.wrongBox = [];
+      });
+      return parsed;
+    }
+
+    function loadPersistedState() {
+      try {
+        const raw = window.localStorage.getItem(STORAGE_KEY);
+        if (!raw) return false;
+        let parsed = JSON.parse(raw);
+        if (!parsed.stacks || !Array.isArray(parsed.stacks)) return false;
+        parsed = migrateState(parsed);
+        state.stacks = parsed.stacks;
+        state.libraries = parsed.libraries;
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    // ============================================================
+    // DASHBOARD RENDERING & SEARCH
+    // ============================================================
+    function renderApp() {
+      currentLibraryId = null;
+      activeStackDetailId = null;
+      const root = document.getElementById("app-root");
+      root.innerHTML = "";
+      renderDashboard(root);
+      applyStaticI18n();
+    }
+
+    function getStackDescription(stack) {
+      return (typeof stack.description === "string" && stack.description.trim()) ? stack.description.trim() : t("noDescription");
+    }
+
+    function getLibraryDescription(library) {
+      return (typeof library.description === "string" && library.description.trim()) ? library.description.trim() : t("noDescription");
+    }
+
+    function buildDashboardStackCard(stack) {
+      const card = document.createElement("div");
+      card.className = "dashboard-stack";
+      card.draggable = true;
+      card.dataset.stackId = stack.id;
+      card.setAttribute("aria-label", `Stack: ${stack.title}`);
+
+      card.innerHTML = `
+        <button type="button" class="dashboard-stack-open" aria-label="Open stack: ${escapeHtml(stack.title)}">
+          <span class="dashboard-stack-title">${escapeHtml(stack.title)}</span>
+          <span class="dashboard-stack-description">${escapeHtml(getStackDescription(stack))}</span>
+          <span class="dashboard-stack-badge">${stack.cards.length} ${t("cardsCount")}</span>
+        </button>
+        <button type="button" class="stack-kebab" aria-label="Options for ${escapeHtml(stack.title)}" title="Stack options">⋮</button>
+      `;
+
+      card.querySelector(".dashboard-stack-open").addEventListener("click", () => openStackDetail(stack.id));
+      card.querySelector(".stack-kebab").addEventListener("click", (event) => {
+        event.stopPropagation();
+        openStackOptionsMenu(stack.id);
+      });
+
+      card.addEventListener("dragstart", handleStackDragStart);
+      card.addEventListener("dragend", handleStackDragEnd);
+
+      return card;
+    }
+
+    function buildLibraryCard(library) {
+      const stackCount = state.stacks.filter(s => s.libraryId === library.id).length;
+
+      const card = document.createElement("div");
+      card.className = "library-box";
+      card.dataset.libraryId = library.id;
+
+      card.innerHTML = `
+        <button type="button" class="library-open" aria-label="Open library: ${escapeHtml(library.title)}">
+          <span class="library-icon" aria-hidden="true">📚</span>
+          <span class="library-text">
+            <span class="library-title">${escapeHtml(library.title)}</span>
+            <span class="library-description">${escapeHtml(getLibraryDescription(library))}</span>
+            <span class="library-stack-count">${stackCount} ${t("stacks").toLowerCase()}</span>
+          </span>
+        </button>
+      `;
+
+      card.querySelector(".library-open").addEventListener("click", () => openLibraryDetail(library.id));
+      card.addEventListener("dragover", handleLibraryDragOver);
+      card.addEventListener("dragleave", handleLibraryDragLeave);
+      card.addEventListener("drop", (event) => handleLibraryDrop(event, library.id));
+
+      return card;
+    }
+
+    function renderDashboard(container) {
+      // Search Bar
+      const searchRow = document.createElement("div");
+      searchRow.className = "search-filter-bar";
+      searchRow.innerHTML = `
+        <div class="search-input-wrap">
+          <span class="search-icon" aria-hidden="true">🔍</span>
+          <input type="text" id="dashboard-search" placeholder="${escapeHtml(t("searchPlaceholder"))}" value="${escapeHtml(dashboardSearchQuery)}" />
+        </div>
+      `;
+      container.appendChild(searchRow);
+
+      const searchInput = searchRow.querySelector("#dashboard-search");
+      searchInput.addEventListener("input", (e) => {
+        dashboardSearchQuery = e.target.value;
+        refreshDashboardGrids(container);
+      });
+
+      const contentWrap = document.createElement("div");
+      contentWrap.id = "dashboard-content-wrap";
+      container.appendChild(contentWrap);
+
+      refreshDashboardGrids(container);
+    }
+
+    function refreshDashboardGrids(container) {
+      const contentWrap = container.querySelector("#dashboard-content-wrap") || container;
+      contentWrap.innerHTML = "";
+
+      const query = dashboardSearchQuery.trim().toLowerCase();
+
+      const libraries = state.libraries.filter(l => {
+        if (!query) return true;
+        return l.title.toLowerCase().includes(query) || (l.description && l.description.toLowerCase().includes(query));
+      });
+
+      const ungroupedStacks = state.stacks.filter(s => {
+        if (s.libraryId) return false;
+        if (!query) return true;
+        return s.title.toLowerCase().includes(query) || (s.description && s.description.toLowerCase().includes(query));
+      });
+
+      // Libraries Section
+      const libHeader = document.createElement("div");
+      libHeader.className = "section-header";
+      libHeader.innerHTML = `
+        <div class="section-heading">
+          <div class="section-heading-row">
+            <h1 class="section-title">${t("libraries")}</h1>
+            <button class="btn btn-sm btn-primary" onclick="openAddLibraryModal()">${t("newLibrary")}</button>
+          </div>
+          <p class="section-sub">${t("librariesSub")}</p>
+        </div>
+      `;
+      contentWrap.appendChild(libHeader);
+
+      if (libraries.length === 0) {
+        const emptyLib = document.createElement("div");
+        emptyLib.className = "empty-state";
+        emptyLib.innerHTML = `<p>${query ? t("noMatchingCards") : t("noLibraries")}</p>`;
+        contentWrap.appendChild(emptyLib);
+      } else {
+        const libGrid = document.createElement("div");
+        libGrid.className = "library-grid";
+        libraries.forEach(library => libGrid.appendChild(buildLibraryCard(library)));
+        contentWrap.appendChild(libGrid);
+      }
+
+      // Ungrouped Stacks Section
+      const stackHeader = document.createElement("div");
+      stackHeader.className = "section-header";
+      stackHeader.style.marginTop = "2.5rem";
+      stackHeader.innerHTML = `
+        <div class="section-heading">
+          <div class="section-heading-row">
+            <h1 class="section-title">${t("stacks")}</h1>
+            <button class="btn btn-sm btn-primary" onclick="openAddStackModal()">${t("addStack")}</button>
+          </div>
+          <p class="section-sub">${t("stacksSub")}</p>
+        </div>
+      `;
+      contentWrap.appendChild(stackHeader);
+
+      if (ungroupedStacks.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "empty-state";
+        empty.innerHTML = `
+          <h3>${query ? t("noMatchingCards") : t("noStacksTitle")}</h3>
+          <p>${query ? "" : t("noStacksDesc")}</p>
+          ${!query ? `<button class="btn btn-primary" onclick="openAddStackModal()" style="margin-top:1rem;">${t("createStackBtn")}</button>` : ""}
+        `;
+        contentWrap.appendChild(empty);
+      } else {
+        const grid = document.createElement("div");
+        grid.className = "dashboard-grid";
+        ungroupedStacks.forEach(stack => grid.appendChild(buildDashboardStackCard(stack)));
+        contentWrap.appendChild(grid);
+      }
+    }
+
+    // ============================================================
+    // LIBRARY DETAIL VIEW
+    // ============================================================
+    function openLibraryDetail(libraryId) {
+      const library = state.libraries.find(l => l.id === libraryId);
+      if (!library) { currentLibraryId = null; return renderApp(); }
+      currentLibraryId = libraryId;
+      activeStackDetailId = null;
+
+      const root = document.getElementById("app-root");
+      root.innerHTML = "";
+
+      const back = document.createElement("button");
+      back.className = "btn btn-sm stack-view-back";
+      back.textContent = t("backToDashboard");
+      back.onclick = () => renderApp();
+      root.appendChild(back);
+
+      const header = document.createElement("div");
+      header.className = "stack-view-header";
+      header.innerHTML = `
+        <div style="flex:1; min-width:0;">
+          <div class="editable-meta-wrap">
+            <h1 class="section-title">${escapeHtml(library.title)}</h1>
+            <button type="button" class="meta-edit-toggle" onclick="openEditLibraryModal('${escapeHtml(library.id)}')" title="Edit library">✎</button>
+          </div>
+          <p class="stack-view-description">${escapeHtml(getLibraryDescription(library))}</p>
+        </div>
+      `;
+      root.appendChild(header);
+
+      const actions = document.createElement("div");
+      actions.className = "stack-view-actions";
+      actions.innerHTML = `
+        <button class="btn btn-sm btn-primary" onclick="openAddStackModal('${escapeHtml(library.id)}')">+ ${t("addStack")}</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteLibrary('${escapeHtml(library.id)}')">${t("delete")} Library</button>
+      `;
+      root.appendChild(actions);
+
+      const childStacks = state.stacks.filter(s => s.libraryId === library.id);
+      if (childStacks.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "empty-state";
+        empty.innerHTML = `<h3>${t("noStacksTitle")}</h3><p>${t("noStacksDesc")}</p>`;
+        root.appendChild(empty);
+        return;
+      }
+
+      const grid = document.createElement("div");
+      grid.className = "dashboard-grid";
+      childStacks.forEach(stack => grid.appendChild(buildDashboardStackCard(stack)));
+      root.appendChild(grid);
+    }
+
+    // ============================================================
+    // STACK DETAIL VIEW WITH SEARCH & FILTERS
+    // ============================================================
+    function openStackDetail(stackId) {
+      activeStackDetailId = stackId;
+      const root = document.getElementById("app-root");
+      root.innerHTML = "";
+      const stack = state.stacks.find(s => s.id === stackId);
+      if (!stack) return renderApp();
+
+      const back = document.createElement("button");
+      back.className = "btn btn-sm stack-view-back";
+      back.textContent = currentLibraryId ? t("backToLibrary") : t("backToDashboard");
+      back.onclick = () => {
+        if (currentLibraryId) openLibraryDetail(currentLibraryId);
+        else renderApp();
+      };
+      root.appendChild(back);
+
+      const header = document.createElement("div");
+      header.className = "stack-view-header";
+      header.innerHTML = `
+        <div style="flex:1; min-width:0;">
+          <div class="editable-meta-wrap">
+            <h1 class="section-title" id="stack-title-display">${escapeHtml(stack.title)}</h1>
+            <button type="button" class="meta-edit-toggle" id="meta-edit-toggle" onclick="toggleStackMetadataEdit('${escapeHtml(stack.id)}')" title="Edit stack metadata">✎</button>
+          </div>
+          <p class="stack-view-description" id="stack-desc-display">${escapeHtml(getStackDescription(stack))}</p>
+          <div class="meta-edit-form" id="meta-edit-form">
+            <label for="meta-edit-title">Stack Title</label>
+            <input type="text" id="meta-edit-title" value="${escapeHtml(stack.title)}" />
+            <label for="meta-edit-description">Stack Description</label>
+            <textarea id="meta-edit-description" rows="3">${escapeHtml(stack.description || "")}</textarea>
+            <div class="meta-edit-actions">
+              <button type="button" class="btn btn-sm" onclick="cancelStackMetadataEdit()">${t("cancel")}</button>
+              <button type="button" class="btn btn-sm btn-primary" onclick="saveStackMetadata('${escapeHtml(stack.id)}')">✓ ${t("save")}</button>
+            </div>
+          </div>
+        </div>
+        <div class="stack-card-count">${stack.cards.length} ${t("cardsCount")}</div>
+      `;
+      root.appendChild(header);
+
+      // Stat boxes
+      const correctCount = stack.correctBox.length;
+      const wrongCount = stack.wrongBox.length;
+      const stats = document.createElement("div");
+      stats.className = "stat-boxes";
+      stats.innerHTML = `
+        <div class="stat-box stat-box-correct">
+          <span class="stat-box-label">${t("correctCards")}</span>
+          <span class="stat-box-value">${correctCount}</span>
+        </div>
+        <button type="button"
+                class="stat-box stat-box-wrong${wrongCount === 0 ? " is-disabled" : ""}"
+                ${wrongCount === 0 ? 'disabled aria-disabled="true"' : ""}
+                onclick="openWrongBoxReview('${escapeHtml(stack.id)}')"
+                aria-label="${t("wrongCards")}: ${wrongCount}">
+          <span class="stat-box-label">${t("wrongCards")}</span>
+          <span class="stat-box-value">${wrongCount}</span>
+          <span class="stat-box-hint">${t("clickToReview")}</span>
+        </button>
+      `;
+      root.appendChild(stats);
+
+      // Action Buttons
+      const actions = document.createElement("div");
+      actions.className = "stack-view-actions";
+      actions.innerHTML = `
+        <button class="btn btn-sm btn-primary" onclick="openAddCardModal('${escapeHtml(stack.id)}')">${t("addCard")}</button>
+        <button class="btn btn-sm" onclick="openTestConfigModal('${escapeHtml(stack.id)}')">${t("startTest")}</button>
+        <button class="btn btn-sm" onclick="openFlashcardOrderModal('${escapeHtml(stack.id)}')">${t("startFlashcards")}</button>
+        <button class="btn btn-sm" onclick="duplicateStack('${escapeHtml(stack.id)}')">📋 ${t("duplicateStack")}</button>
+        <button class="btn btn-sm" onclick="exportStackCsv('${escapeHtml(stack.id)}')">📄 ${t("exportCsv")}</button>
+        <button class="btn btn-sm" onclick="exportStack('${escapeHtml(stack.id)}')">💾 ${t("exportStack")}</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteStack('${escapeHtml(stack.id)}')">${t("deleteStack")}</button>
+      `;
+      root.appendChild(actions);
+
+      // Search & Filter row for cards
+      const filterBar = document.createElement("div");
+      filterBar.className = "search-filter-bar";
+      filterBar.innerHTML = `
+        <div class="search-input-wrap">
+          <span class="search-icon" aria-hidden="true">🔍</span>
+          <input type="text" id="stack-card-search" placeholder="${escapeHtml(t("searchCardsPlaceholder"))}" value="${escapeHtml(stackSearchQuery)}" />
+        </div>
+        <select class="filter-select" id="stack-status-filter" aria-label="Filter cards by status">
+          <option value="all" ${stackStatusFilter === 'all' ? 'selected' : ''}>${t("filterAll")}</option>
+          <option value="correct" ${stackStatusFilter === 'correct' ? 'selected' : ''}>${t("filterCorrect")}</option>
+          <option value="wrong" ${stackStatusFilter === 'wrong' ? 'selected' : ''}>${t("filterWrong")}</option>
+          <option value="untested" ${stackStatusFilter === 'untested' ? 'selected' : ''}>${t("filterUntested")}</option>
+        </select>
+      `;
+      root.appendChild(filterBar);
+
+      const searchInput = filterBar.querySelector("#stack-card-search");
+      const filterSelect = filterBar.querySelector("#stack-status-filter");
+
+      searchInput.addEventListener("input", (e) => {
+        stackSearchQuery = e.target.value;
+        renderCardsTable(stack, tableWrap);
+      });
+      filterSelect.addEventListener("change", (e) => {
+        stackStatusFilter = e.target.value;
+        renderCardsTable(stack, tableWrap);
+      });
+
+      const tableWrap = document.createElement("div");
+      tableWrap.className = "cards-table-wrap";
+      root.appendChild(tableWrap);
+
+      renderCardsTable(stack, tableWrap);
+    }
+
+    function renderCardsTable(stack, tableWrap) {
+      const query = stackSearchQuery.trim().toLowerCase();
+
+      const filteredCards = stack.cards.filter(c => {
+        const inCorrect = stack.correctBox.includes(c.id);
+        const inWrong = stack.wrongBox.includes(c.id);
+
+        if (stackStatusFilter === "correct" && !inCorrect) return false;
+        if (stackStatusFilter === "wrong" && !inWrong) return false;
+        if (stackStatusFilter === "untested" && (inCorrect || inWrong)) return false;
+
+        if (query) {
+          return c.q.toLowerCase().includes(query) || c.a.toLowerCase().includes(query);
+        }
+        return true;
+      });
+
+      tableWrap.innerHTML = `
+        <table class="cards-table" aria-label="Cards table">
+          <thead>
+            <tr>
+              <th scope="col">${t("front")}</th>
+              <th scope="col">${t("back")}</th>
+              <th scope="col">${t("status")}</th>
+              <th scope="col">${t("action")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filteredCards.map(c => {
+              const inCorrect = stack.correctBox.includes(c.id);
+              const inWrong = stack.wrongBox.includes(c.id);
+              let status = t("filterUntested");
+              let statusClass = "";
+              if (inCorrect) { status = t("filterCorrect"); statusClass = "success"; }
+              else if (inWrong) { status = t("filterWrong"); statusClass = "danger"; }
+              return `
+                <tr>
+                  <td>
+                    <div class="table-cell-content">
+                      <span class="table-cell-text">${escapeHtml(c.q)}</span>
+                      <button type="button" class="btn-icon" onclick="event.stopPropagation(); speakText('${escapeHtml(c.q).replace(/'/g, "\\'")}')" title="Listen" aria-label="Listen front">🔊</button>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="table-cell-content">
+                      <span class="table-cell-text">${escapeHtml(c.a)}</span>
+                      <button type="button" class="btn-icon" onclick="event.stopPropagation(); speakText('${escapeHtml(c.a).replace(/'/g, "\\'")}')" title="Listen" aria-label="Listen back">🔊</button>
+                    </div>
+                  </td>
+                  <td><span class="meta-badge ${statusClass}">${status}</span></td>
+                  <td>
+                    <button class="btn btn-sm" onclick="openManageCardModal('${escapeHtml(stack.id)}', '${escapeHtml(c.id)}')" aria-label="Edit card">${t("edit")}</button>
+                  </td>
+                </tr>
+              `;
+            }).join("") || `<tr><td colspan="4" style="text-align:center; color:var(--fg-muted);">${stack.cards.length === 0 ? t("noCardsYet") : t("noMatchingCards")}</td></tr>`}
+          </tbody>
+        </table>
+      `;
+    }
+
+    // ============================================================
+    // STACK & CARD CRUD / DUPLICATION / EXPORT
+    // ============================================================
+    function openAddLibraryModal() {
+      showModal(t("newLibrary"), `
+        <label for="new-library-title">Library Title</label>
+        <input type="text" id="new-library-title" placeholder="e.g., Languages" value="" />
+        <label for="new-library-description">Description</label>
+        <textarea id="new-library-description" rows="3" placeholder="What kind of stacks live here?"></textarea>
+        <div class="btn-row">
+          <button class="btn" type="button" onclick="closeModal()">${t("cancel")}</button>
+          <button class="btn btn-primary" type="button" onclick="createLibrary()">${t("create")}</button>
+        </div>
+      `);
+    }
+
+    function createLibrary() {
+      const titleInput = document.getElementById("new-library-title");
+      const descInput = document.getElementById("new-library-description");
+      const title = titleInput ? titleInput.value.trim() : "";
+      const description = descInput ? descInput.value.trim() : "";
+      if (!title) {
+        showAlert("Please enter a library title.");
+        return;
+      }
+      state.libraries.push({ id: generateId("lib"), title, description });
+      persistState();
+      closeModal();
+      renderApp();
+    }
+
+    function openEditLibraryModal(libraryId) {
+      const library = state.libraries.find(l => l.id === libraryId);
+      if (!library) return;
+      showModal("Edit Library", `
+        <input type="hidden" id="edit-library-id" value="${escapeHtml(libraryId)}" />
+        <label for="edit-library-title">Library Title</label>
+        <input type="text" id="edit-library-title" value="${escapeHtml(library.title)}" />
+        <label for="edit-library-description">Description</label>
+        <textarea id="edit-library-description" rows="3">${escapeHtml(library.description || "")}</textarea>
+        <div class="btn-row">
+          <button class="btn" type="button" onclick="closeModal()">${t("cancel")}</button>
+          <button class="btn btn-primary" type="button" onclick="saveLibraryEdit()">✓ ${t("save")}</button>
+        </div>
+      `);
+    }
+
+    function saveLibraryEdit() {
+      const libraryId = document.getElementById("edit-library-id").value;
+      const titleInput = document.getElementById("edit-library-title");
+      const descInput = document.getElementById("edit-library-description");
+      const library = state.libraries.find(l => l.id === libraryId);
+      if (!library) { closeModal(); return; }
+
+      const newTitle = titleInput ? titleInput.value.trim() : "";
+      if (!newTitle) {
+        showAlert("Library title cannot be empty.");
+        return;
+      }
+      library.title = newTitle;
+      library.description = descInput ? descInput.value.trim() : "";
+
+      persistState();
+      closeModal();
+      if (currentLibraryId === libraryId) openLibraryDetail(libraryId);
+      else renderApp();
+    }
+
+    function deleteLibrary(libraryId) {
+      if (!confirm("Delete this library? Its stacks will move back to the main dashboard.")) return;
+      state.stacks.forEach(stack => {
+        if (stack.libraryId === libraryId) stack.libraryId = null;
+      });
+      state.libraries = state.libraries.filter(l => l.id !== libraryId);
+      persistState();
+      currentLibraryId = null;
+      renderApp();
+    }
+
+    function openAddStackModal(libraryId = null) {
+      showModal(t("addStack"), `
+        <input type="hidden" id="new-stack-library-id" value="${escapeHtml(libraryId || "")}" />
+        <label for="new-stack-title">Stack Title</label>
+        <input type="text" id="new-stack-title" placeholder="e.g., Spanish Vocabulary" value="" />
+        <label for="new-stack-description">Description</label>
+        <textarea id="new-stack-description" rows="3" placeholder="What will you study in this stack?"></textarea>
+        <div class="btn-row">
+          <button class="btn" onclick="closeModal()">${t("cancel")}</button>
+          <button class="btn btn-primary" onclick="createStack()">${t("create")}</button>
+        </div>
+      `);
+    }
+
+    function createStack() {
+      const input = document.getElementById("new-stack-title");
+      const descriptionInput = document.getElementById("new-stack-description");
+      const libraryIdInput = document.getElementById("new-stack-library-id");
+      const title = input ? input.value.trim() : "";
+      const description = descriptionInput ? descriptionInput.value.trim() : "";
+      const libraryId = libraryIdInput && libraryIdInput.value ? libraryIdInput.value : null;
+      if (!title) {
+        showAlert("Please enter a stack title.");
+        return;
+      }
+      const newStack = {
+        id: generateId("stack"),
+        title,
+        description,
+        libraryId,
+        cards: [],
+        correctBox: [],
+        wrongBox: []
+      };
+      state.stacks.push(newStack);
+      closeModal();
+      persistState();
+      if (libraryId) openLibraryDetail(libraryId);
+      else renderApp();
+    }
+
+    function duplicateStack(stackId) {
+      const source = state.stacks.find(s => s.id === stackId);
+      if (!source) return;
+
+      const copyTitle = `${source.title} (${currentLang === 'tr' ? 'Kopya' : 'Copy'})`;
+      const clonedCards = source.cards.map(c => ({
+        id: generateId("c"),
+        q: c.q,
+        a: c.a
+      }));
+
+      const clonedStack = {
+        id: generateId("stack"),
+        title: copyTitle,
+        description: source.description || "",
+        libraryId: source.libraryId || null,
+        cards: clonedCards,
+        correctBox: [],
+        wrongBox: []
+      };
+
+      state.stacks.push(clonedStack);
+      persistState();
+      showToast(t("stackDuplicated"));
+
+      if (currentLibraryId) openLibraryDetail(currentLibraryId);
+      else if (activeStackDetailId) openStackDetail(clonedStack.id);
+      else renderApp();
+    }
+
+    function deleteStack(stackId) {
+      if (!confirm("Delete this stack and all its cards?")) return;
+      const stack = state.stacks.find(s => s.id === stackId);
+      const parentLibraryId = stack ? stack.libraryId : null;
+      state.stacks = state.stacks.filter(s => s.id !== stackId);
+      persistState();
+      if (parentLibraryId) openLibraryDetail(parentLibraryId);
+      else renderApp();
+    }
+
+    function exportStack(stackId) {
+      const stack = state.stacks.find(s => s.id === stackId);
+      if (!stack) return;
+      const exportState = { stacks: [stack], libraries: [] };
+      const blob = new Blob([JSON.stringify(exportState, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const safeTitle = stack.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "stack";
+      link.href = url;
+      link.download = `cardlyo_${safeTitle}_save.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportStackCsv(stackId) {
+      const stack = state.stacks.find(s => s.id === stackId);
+      if (!stack || stack.cards.length === 0) {
+        showAlert("Stack has no cards to export.");
+        return;
+      }
+
+      let csv = "Front,Back\n";
+      stack.cards.forEach(c => {
+        const qEsc = `"${(c.q || '').replace(/"/g, '""')}"`;
+        const aEsc = `"${(c.a || '').replace(/"/g, '""')}"`;
+        csv += `${qEsc},${aEsc}\n`;
+      });
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const safeTitle = stack.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "stack";
+      link.href = url;
+      link.download = `cardlyo_${safeTitle}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    // ============================================================
+    // INLINE METADATA EDITING
+    // ============================================================
+    function toggleStackMetadataEdit(stackId) {
+      const form = document.getElementById("meta-edit-form");
+      const titleDisplay = document.getElementById("stack-title-display");
+      const descDisplay = document.getElementById("stack-desc-display");
+      const toggleBtn = document.getElementById("meta-edit-toggle");
+
+      if (form && titleDisplay && descDisplay && toggleBtn) {
+        form.classList.add("active");
+        titleDisplay.style.display = "none";
+        descDisplay.style.display = "none";
+        toggleBtn.style.display = "none";
+        const stack = state.stacks.find(s => s.id === stackId);
+        if (stack) {
+          const titleInput = document.getElementById("meta-edit-title");
+          const descInput = document.getElementById("meta-edit-description");
+          if (titleInput) titleInput.value = stack.title;
+          if (descInput) descInput.value = stack.description || "";
+        }
+        const titleInput = document.getElementById("meta-edit-title");
+        if (titleInput) titleInput.focus();
+      }
+    }
+
+    function cancelStackMetadataEdit() {
+      const form = document.getElementById("meta-edit-form");
+      const titleDisplay = document.getElementById("stack-title-display");
+      const descDisplay = document.getElementById("stack-desc-display");
+      const toggleBtn = document.getElementById("meta-edit-toggle");
+
+      if (form) form.classList.remove("active");
+      if (titleDisplay) titleDisplay.style.display = "";
+      if (descDisplay) descDisplay.style.display = "";
+      if (toggleBtn) toggleBtn.style.display = "";
+    }
+
+    function saveStackMetadata(stackId) {
+      const stack = state.stacks.find(s => s.id === stackId);
+      const titleInput = document.getElementById("meta-edit-title");
+      const descInput = document.getElementById("meta-edit-description");
+
+      if (!stack) return;
+      const newTitle = titleInput ? titleInput.value.trim() : "";
+      if (!newTitle) {
+        showAlert("Stack title cannot be empty.");
+        return;
+      }
+      stack.title = newTitle;
+      stack.description = descInput ? descInput.value.trim() : "";
+
+      persistState();
+      openStackDetail(stackId);
+    }
+
+    // ============================================================
+    // STACK OPTIONS MENU (⋮)
+    // ============================================================
+    function openStackOptionsMenu(stackId) {
+      const stack = state.stacks.find(s => s.id === stackId);
+      if (!stack) return;
+      const isGrouped = !!stack.libraryId;
+
+      showModal("Stack Options", `
+        <div style="display:grid; gap:0.6rem;">
+          <button class="btn" type="button" style="justify-content:flex-start;" onclick="duplicateStack('${escapeHtml(stackId)}'); closeModal();">📋 ${t("duplicateStack")}</button>
+          <button class="btn" type="button" style="justify-content:flex-start;" onclick="exportStackCsv('${escapeHtml(stackId)}'); closeModal();">📄 ${t("exportCsv")}</button>
+          <button class="btn" type="button" style="justify-content:flex-start;" onclick="openMoveToLibraryPicker('${escapeHtml(stackId)}')">🗂️ Move to Library</button>
+          ${isGrouped ? `<button class="btn" type="button" style="justify-content:flex-start;" onclick="removeStackFromLibrary('${escapeHtml(stackId)}')">↩ Remove from Library</button>` : ""}
+          <button class="btn btn-danger" type="button" style="justify-content:flex-start;" onclick="deleteStack('${escapeHtml(stackId)}'); closeModal();">🗑️ ${t("deleteStack")}</button>
+          <button class="btn" type="button" onclick="closeModal()">${t("cancel")}</button>
+        </div>
+      `);
+    }
+
+    function openMoveToLibraryPicker(stackId) {
+      const libraries = state.libraries;
+      if (libraries.length === 0) {
+        showModal("Move to Library", `
+          <p style="color:var(--fg-muted); margin-bottom:1.1rem;">You don't have any libraries yet.</p>
+          <div class="btn-row">
+            <button class="btn" type="button" onclick="closeModal()">${t("cancel")}</button>
+            <button class="btn btn-primary" type="button" onclick="closeModal(); openAddLibraryModal();">${t("newLibrary")}</button>
+          </div>
+        `);
+        return;
+      }
+
+      const options = libraries.map(library => `
+        <button class="btn" type="button" style="justify-content:flex-start;" onclick="moveStackToLibrary('${escapeHtml(stackId)}', '${escapeHtml(library.id)}')">🗂️ ${escapeHtml(library.title)}</button>
+      `).join("");
+
+      showModal("Move to Library", `
+        <div style="display:grid; gap:0.5rem; max-height:260px; overflow-y:auto; margin-bottom:0.9rem;">${options}</div>
+        <div class="btn-row"><button class="btn" type="button" onclick="closeModal()">${t("cancel")}</button></div>
+      `);
+    }
+
+    function moveStackToLibrary(stackId, libraryId) {
+      const stack = state.stacks.find(s => s.id === stackId);
+      if (!stack) return;
+      stack.libraryId = libraryId;
+      persistState();
+      closeModal();
+      showToast(t("stackMoved"));
+      if (currentLibraryId) openLibraryDetail(currentLibraryId); else renderApp();
+    }
+
+    function removeStackFromLibrary(stackId) {
+      const stack = state.stacks.find(s => s.id === stackId);
+      if (!stack) return;
+      stack.libraryId = null;
+      persistState();
+      closeModal();
+      showToast(t("stackRemoved"));
+      if (currentLibraryId) openLibraryDetail(currentLibraryId); else renderApp();
+    }
+
+    // Drag & Drop
+    function handleStackDragStart(event) {
+      draggedStackId = event.currentTarget.dataset.stackId;
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", draggedStackId);
+      event.currentTarget.classList.add("dragging");
+    }
+    function handleStackDragEnd(event) {
+      event.currentTarget.classList.remove("dragging");
+      draggedStackId = null;
+      document.querySelectorAll(".library-box.drag-over").forEach(el => el.classList.remove("drag-over"));
+    }
+    function handleLibraryDragOver(event) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+      event.currentTarget.classList.add("drag-over");
+    }
+    function handleLibraryDragLeave(event) {
+      event.currentTarget.classList.remove("drag-over");
+    }
+    function handleLibraryDrop(event, libraryId) {
+      event.preventDefault();
+      event.currentTarget.classList.remove("drag-over");
+      const stackId = event.dataTransfer.getData("text/plain") || draggedStackId;
+      if (!stackId) return;
+      const stack = state.stacks.find(s => s.id === stackId);
+      if (!stack) return;
+      stack.libraryId = libraryId;
+      persistState();
+      showToast(t("stackMoved"));
+      renderApp();
+    }
+
+    // ============================================================
+    // CARD CREATION & CSV / BULK IMPORT
+    // ============================================================
+    function openAddCardModal(stackId) {
+      const stack = state.stacks.find(s => s.id === stackId);
+      if (!stack) return;
+
+      showModal(t("addCardsTitle"), `
+        <input type="hidden" id="new-card-stack" value="${escapeHtml(stackId)}" />
+
+        <div class="tabs" role="tablist">
+          <button class="tab-btn active" type="button" role="tab" data-tab="single" onclick="switchAddCardTab('single')">${t("singleCard")}</button>
+          <button class="tab-btn" type="button" role="tab" data-tab="bulk" onclick="switchAddCardTab('bulk')">${t("bulkImport")}</button>
+          <button class="tab-btn" type="button" role="tab" data-tab="file" onclick="switchAddCardTab('file')">${t("csvFileImport")}</button>
+        </div>
+
+        <div class="tab-panel active" data-tab="single" role="tabpanel">
+          <label for="new-card-q">${t("front")}</label>
+          <input type="text" id="new-card-q" placeholder="e.g., sein" value="" />
+          <label for="new-card-a">${t("back")}</label>
+          <input type="text" id="new-card-a" placeholder="e.g., to be" value="" />
+          <div class="btn-row">
+            <button class="btn" type="button" onclick="closeModal()">${t("cancel")}</button>
+            <button class="btn btn-primary" type="button" onclick="createCard()">${t("addCard")}</button>
+          </div>
+        </div>
+
+        <div class="tab-panel" data-tab="bulk" role="tabpanel">
+          <label class="bulk-label" for="bulk-raw-text">Raw Text</label>
+          <textarea class="bulk-textarea" id="bulk-raw-text" placeholder="to go.gitmek&#10;to swim.yüzmek" spellcheck="false"></textarea>
+          <div class="bulk-sep-row">
+            <div class="bulk-sep-field">
+              <label class="bulk-label" for="bulk-side-sep">${t("cardSideSep")}</label>
+              <input type="text" id="bulk-side-sep" value="." maxlength="10" placeholder="." />
+              <div class="bulk-sep-hint">${t("sepHintSide")}</div>
+            </div>
+            <div class="bulk-sep-field">
+              <label class="bulk-label" for="bulk-card-sep">${t("nextCardSep")}</label>
+              <input type="text" id="bulk-card-sep" value="" maxlength="10" placeholder="newline" />
+              <div class="bulk-sep-hint">${t("sepHintNext")}</div>
+            </div>
+          </div>
+          <div class="bulk-preview" aria-live="polite">
+            <div class="bulk-preview-title">${t("preview")} <span class="bulk-preview-count" id="bulk-preview-count">0</span></div>
+            <div id="bulk-preview-body"><div class="bulk-preview-empty">Add text to preview cards.</div></div>
+          </div>
+          <div class="btn-row">
+            <button class="btn" type="button" onclick="closeModal()">${t("cancel")}</button>
+            <button class="btn btn-primary" id="bulk-import-btn" type="button" onclick="executeBulkImport()" disabled>${t("importCardsBtn")}</button>
+          </div>
+        </div>
+
+        <div class="tab-panel" data-tab="file" role="tabpanel">
+          <p style="color:var(--fg-muted); font-size:0.85rem; line-height:1.5; margin-bottom:1rem;">
+            Upload a CSV or TSV file. Columns should be: Front, Back.
+          </p>
+          <input type="file" id="csv-file-input" accept=".csv,.tsv,.txt" style="margin-bottom:1rem;" onchange="handleCsvFileSelected(this)" />
+          <div class="bulk-preview" id="csv-preview-box" style="display:none;">
+            <div class="bulk-preview-title">${t("preview")} <span class="bulk-preview-count" id="csv-preview-count">0</span></div>
+            <div id="csv-preview-body"></div>
+          </div>
+          <div class="btn-row">
+            <button class="btn" type="button" onclick="closeModal()">${t("cancel")}</button>
+            <button class="btn btn-primary" id="csv-import-btn" type="button" onclick="executeCsvImport()" disabled>${t("importCardsBtn")}</button>
+          </div>
+        </div>
+      `, "add-card-modal");
+
+      const rawEl = currentModalBack.querySelector("#bulk-raw-text");
+      const sideEl = currentModalBack.querySelector("#bulk-side-sep");
+      const cardEl = currentModalBack.querySelector("#bulk-card-sep");
+      const updatePreview = () => renderBulkPreview(rawEl.value, sideEl.value, cardEl.value);
+      rawEl.addEventListener("input", updatePreview);
+      sideEl.addEventListener("input", updatePreview);
+      cardEl.addEventListener("input", updatePreview);
+    }
+
+    function switchAddCardTab(tabName) {
+      if (!currentModalBack) return;
+      currentModalBack.querySelectorAll(".tab-btn").forEach(btn => {
+        const isActive = btn.dataset.tab === tabName;
+        btn.classList.toggle("active", isActive);
+        btn.setAttribute("aria-selected", isActive ? "true" : "false");
+      });
+      currentModalBack.querySelectorAll(".tab-panel").forEach(panel => {
+        panel.classList.toggle("active", panel.dataset.tab === tabName);
+      });
+    }
+
+    function createCard() {
+      const qInput = document.getElementById("new-card-q");
+      const aInput = document.getElementById("new-card-a");
+      const stackInput = document.getElementById("new-card-stack");
+      const q = qInput ? qInput.value.trim() : "";
+      const a = aInput ? aInput.value.trim() : "";
+      const stackId = stackInput ? stackInput.value : "";
+      if (!q || !a || !stackId) {
+        showAlert("Please fill in both front and back.");
+        return;
+      }
+      const stack = state.stacks.find(s => s.id === stackId);
+      if (!stack) { closeModal(); return; }
+      stack.cards.push({ id: generateId("c"), q, a });
+      closeModal();
+      persistState();
+      openStackDetail(stackId);
+      showToast(t("cardUpdated"));
+    }
+
+    function parseBulkText(rawText, sideSep, cardSepRaw) {
+      const result = { valid: [], skipped: 0 };
+      if (!rawText || !rawText.trim()) return result;
+      if (!sideSep) return result;
+
+      const cardSep = (!cardSepRaw || cardSepRaw === "") ? "\n" : cardSepRaw;
+      const rawCards = rawText.split(cardSep);
+
+      rawCards.forEach(rawCard => {
+        const trimmed = rawCard.trim();
+        if (!trimmed) return;
+        const parts = trimmed.split(sideSep);
+        if (parts.length >= 2) {
+          const front = parts[0].trim();
+          const back = parts.slice(1).join(sideSep).trim();
+          if (front && back) result.valid.push({ q: front, a: back });
+          else result.skipped++;
+        } else {
+          result.skipped++;
+        }
+      });
+      return result;
+    }
+
+    function renderBulkPreview(rawText, sideSep, cardSepRaw) {
+      const bodyEl = document.getElementById("bulk-preview-body");
+      const countEl = document.getElementById("bulk-preview-count");
+      const importBtn = document.getElementById("bulk-import-btn");
+      if (!bodyEl || !countEl) return;
+
+      const { valid, skipped } = parseBulkText(rawText, sideSep, cardSepRaw);
+      countEl.textContent = valid.length;
+
+      if (valid.length === 0 && skipped === 0) {
+        bodyEl.innerHTML = '<div class="bulk-preview-empty">Add text to preview cards.</div>';
+        if (importBtn) importBtn.disabled = true;
+        return;
+      }
+
+      let html = "";
+      valid.slice(0, 50).forEach(card => {
+        html += `
+          <div class="bulk-preview-item">
+            <span class="bulk-preview-q">${escapeHtml(card.q)}</span>
+            <span class="bulk-preview-arrow">→</span>
+            <span class="bulk-preview-a">${escapeHtml(card.a)}</span>
+          </div>
+        `;
+      });
+      if (valid.length > 50) {
+        html += `<div style="font-size:0.8rem; color:var(--fg-muted); padding:0.4rem 0;">+ ${valid.length - 50} more cards...</div>`;
+      }
+      if (skipped > 0) {
+        html += `<div class="bulk-preview-item bulk-preview-invalid">${skipped} line(s) skipped</div>`;
+      }
+      bodyEl.innerHTML = html;
+      if (importBtn) importBtn.disabled = (valid.length === 0);
+    }
+
+    function executeBulkImport() {
+      const rawEl = document.getElementById("bulk-raw-text");
+      const sideEl = document.getElementById("bulk-side-sep");
+      const cardEl = document.getElementById("bulk-card-sep");
+      const stackEl = document.getElementById("new-card-stack");
+      if (!rawEl || !sideEl || !stackEl) return;
+
+      const { valid, skipped } = parseBulkText(rawEl.value, sideEl.value, cardEl ? cardEl.value : "");
+      const stack = state.stacks.find(s => s.id === stackEl.value);
+      if (!stack || valid.length === 0) return;
+
+      valid.forEach(c => stack.cards.push({ id: generateId("c"), q: c.q, a: c.a }));
+      closeModal();
+      persistState();
+      openStackDetail(stack.id);
+      showToast(`${valid.length} ${t("cardsImported")}`);
+    }
+
+    let parsedCsvCards = [];
+    function handleCsvFileSelected(input) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const text = e.target.result;
+        parsedCsvCards = parseCsvContent(text);
+        const previewBox = document.getElementById("csv-preview-box");
+        const previewBody = document.getElementById("csv-preview-body");
+        const countEl = document.getElementById("csv-preview-count");
+        const importBtn = document.getElementById("csv-import-btn");
+
+        if (previewBox && previewBody && countEl) {
+          previewBox.style.display = "block";
+          countEl.textContent = parsedCsvCards.length;
+          let html = "";
+          parsedCsvCards.slice(0, 50).forEach(c => {
+            html += `
+              <div class="bulk-preview-item">
+                <span class="bulk-preview-q">${escapeHtml(c.q)}</span>
+                <span class="bulk-preview-arrow">→</span>
+                <span class="bulk-preview-a">${escapeHtml(c.a)}</span>
+              </div>
+            `;
+          });
+          previewBody.innerHTML = html || '<div class="bulk-preview-empty">No valid rows found.</div>';
+          if (importBtn) importBtn.disabled = parsedCsvCards.length === 0;
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function parseCsvContent(text) {
+      const lines = text.split(/\r?\n/);
+      const cards = [];
+      lines.forEach((line, idx) => {
+        if (!line.trim()) return;
+        // Check for TSV vs CSV
+        let parts = line.split("\t");
+        if (parts.length < 2) {
+          parts = line.split(",");
+        }
+        if (parts.length >= 2) {
+          const q = parts[0].replace(/^["']|["']$/g, '').trim();
+          const a = parts[1].replace(/^["']|["']$/g, '').trim();
+          // skip header if "Front" / "Back"
+          if (idx === 0 && q.toLowerCase() === "front" && a.toLowerCase() === "back") return;
+          if (q && a) cards.push({ q, a });
+        }
+      });
+      return cards;
+    }
+
+    function executeCsvImport() {
+      const stackEl = document.getElementById("new-card-stack");
+      if (!stackEl || parsedCsvCards.length === 0) return;
+      const stack = state.stacks.find(s => s.id === stackEl.value);
+      if (!stack) return;
+
+      parsedCsvCards.forEach(c => stack.cards.push({ id: generateId("c"), q: c.q, a: c.a }));
+      closeModal();
+      persistState();
+      openStackDetail(stack.id);
+      showToast(`${parsedCsvCards.length} ${t("cardsImported")}`);
+      parsedCsvCards = [];
+    }
+
+    function openManageCardModal(stackId, cardId) {
+      const stack = state.stacks.find(s => s.id === stackId);
+      if (!stack) return;
+      const card = stack.cards.find(c => c.id === cardId);
+      if (!card) return;
+
+      showModal("Manage Card", `
+        <input type="hidden" id="manage-stack-id" value="${escapeHtml(stackId)}" />
+        <input type="hidden" id="manage-card-id" value="${escapeHtml(cardId)}" />
+
+        <div class="manage-card-section">
+          <span class="manage-card-section-title">Edit Card</span>
+          <label for="manage-card-q">${t("front")}</label>
+          <input type="text" id="manage-card-q" value="${escapeHtml(card.q)}" />
+          <label for="manage-card-a">${t("back")}</label>
+          <input type="text" id="manage-card-a" value="${escapeHtml(card.a)}" />
+          <div class="manage-card-actions" style="display:flex; justify-content:flex-end; gap:0.5rem;">
+            <button type="button" class="btn btn-sm" onclick="closeModal()">${t("cancel")}</button>
+            <button type="button" class="btn btn-sm btn-primary" onclick="saveCardEdits()">${t("save")}</button>
+          </div>
+        </div>
+
+        <div class="manage-card-section danger-zone">
+          <span class="manage-card-section-title" style="color: var(--danger);">Danger Zone</span>
+          <p>Delete this card permanently from the stack and Leitner boxes.</p>
+          <div class="confirm-row" id="delete-confirm-row">
+            <button type="button" class="btn btn-sm btn-danger" onclick="confirmCardDelete()">${t("delete")} Card</button>
+          </div>
+        </div>
+      `, "manage-card-modal");
+    }
+
+    function saveCardEdits() {
+      const stackId = document.getElementById("manage-stack-id").value;
+      const cardId = document.getElementById("manage-card-id").value;
+      const qInput = document.getElementById("manage-card-q");
+      const aInput = document.getElementById("manage-card-a");
+
+      const stack = state.stacks.find(s => s.id === stackId);
+      if (!stack) return;
+      const card = stack.cards.find(c => c.id === cardId);
+      if (!card) return;
+
+      const q = qInput.value.trim();
+      const a = aInput.value.trim();
+      if (!q || !a) {
+        showAlert("Both front and back are required.");
+        return;
+      }
+
+      card.q = q;
+      card.a = a;
+      persistState();
+      closeModal();
+      openStackDetail(stackId);
+      showToast(t("cardUpdated"));
+    }
+
+    function confirmCardDelete() {
+      const stackId = document.getElementById("manage-stack-id").value;
+      const cardId = document.getElementById("manage-card-id").value;
+      const stack = state.stacks.find(s => s.id === stackId);
+      if (!stack) return;
+
+      stack.cards = stack.cards.filter(c => c.id !== cardId);
+      stack.correctBox = stack.correctBox.filter(id => id !== cardId);
+      stack.wrongBox = stack.wrongBox.filter(id => id !== cardId);
+      persistState();
+      closeModal();
+      openStackDetail(stackId);
+      showToast(t("cardDeleted"));
+    }
+
+    // ============================================================
+    // FLASHCARD REVIEW (WITH UNDO & TTS & KEYBOARD SHORTCUTS)
+    // ============================================================
+    let flashcardSession = null;
+    let suppressFlashcardClick = false;
+
+    function getReviewPool(stack, source) {
+      if (source === "wrong") return stack.cards.filter(c => stack.wrongBox.includes(c.id));
+      return stack.cards.slice();
+    }
+
+    function openWrongBoxReview(stackId) {
+      const stack = state.stacks.find(s => s.id === stackId);
+      if (!stack || stack.wrongBox.length === 0) return;
+
+      if (stack.wrongBox.length === 1) {
+        openFlashcardOrderModal(stackId, "wrong");
+        return;
+      }
+
+      showModal(t("reviewWrongCards"), `
+        <p style="color:var(--fg-muted); line-height:1.55; margin-bottom:1.25rem;">
+          ${stack.wrongBox.length} ${t("wrongCards").toLowerCase()}
+        </p>
+        <div style="display:grid; gap:0.7rem;">
+          <button class="btn btn-primary" type="button" onclick="openTestConfigModal('${escapeHtml(stackId)}', 'wrong')">${t("testMode")}</button>
+          <button class="btn" type="button" onclick="openFlashcardOrderModal('${escapeHtml(stackId)}', 'wrong')">${t("flashcardMode")}</button>
+          <button class="btn" type="button" onclick="closeModal()">${t("cancel")}</button>
+        </div>
+      `);
+    }
+
+    function openFlashcardOrderModal(stackId, source = "all") {
+      const stack = state.stacks.find(s => s.id === stackId);
+      if (!stack) return;
+      const pool = getReviewPool(stack, source);
+      if (pool.length === 0) {
+        showAlert(t("minFlashcardError"));
+        return;
+      }
+
+      showModal(t("configureFlashcards"), `
+        <input type="hidden" id="session-stack-id" value="${escapeHtml(stackId)}" />
+        <input type="hidden" id="session-source" value="${escapeHtml(source)}" />
+        <label for="session-order">${t("order")}</label>
+        <select id="session-order">
+          <option value="sequential">${t("orderSeq")}</option>
+          <option value="random">${t("orderRand")}</option>
+        </select>
+        <label for="session-face">${t("firstFace")}</label>
+        <select id="session-face">
+          <option value="front">${t("front")}</option>
+          <option value="back">${t("back")}</option>
+        </select>
+        <div class="btn-row">
+          <button class="btn" type="button" onclick="closeModal()">${t("cancel")}</button>
+          <button class="btn btn-primary" type="button" onclick="confirmFlashcardConfig()">Start</button>
+        </div>
+      `);
+    }
+
+    function confirmFlashcardConfig() {
+      const stackId = document.getElementById("session-stack-id").value;
+      const source = document.getElementById("session-source").value;
+      const order = document.getElementById("session-order").value;
+      const face = document.getElementById("session-face").value;
+      startFlashcardSession(stackId, order, source, face);
+    }
+
+    function shuffleCards(cards) {
+      for (let i = cards.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [cards[i], cards[j]] = [cards[j], cards[i]];
+      }
+      return cards;
+    }
+
+    function startFlashcardSession(stackId, order, source = "all", face = "front") {
+      const stack = state.stacks.find(s => s.id === stackId);
+      const cards = stack ? getReviewPool(stack, source) : [];
+      if (!stack || cards.length === 0) {
+        showAlert(t("minFlashcardError"));
+        return;
+      }
+      if (order === "random") shuffleCards(cards);
+      closeModal();
+
+      flashcardSession = {
+        stackId,
+        cards,
+        index: 0,
+        correct: 0,
+        wrong: 0,
+        locked: false,
+        firstFace: face === "back" ? "back" : "front",
+        undoHistory: []
+      };
+      renderFlashcardSession();
+    }
+
+    function renderFlashcardSession() {
+      if (!flashcardSession) return;
+      const root = document.getElementById("app-root");
+      const currentCard = flashcardSession.cards[flashcardSession.index];
+      const total = flashcardSession.cards.length;
+      const startFlipped = flashcardSession.firstFace === "back";
+      const hasUndo = flashcardSession.undoHistory.length > 0;
+
+      root.innerHTML = `
+        <section class="flashcard-overlay" aria-label="Flashcard review session">
+          <div class="flashcard-session">
+            <div class="flashcard-session-top">
+              <span>Card ${flashcardSession.index + 1} / ${total}</span>
+              <div class="flashcard-top-actions">
+                ${hasUndo ? `<button class="btn btn-sm" type="button" onclick="undoFlashcardStep()">${t("undo")}</button>` : ""}
+                <button class="btn btn-sm" type="button" onclick="finishFlashcardReview(true)">${t("exit")}</button>
+              </div>
+            </div>
+            <div class="flashcard-scene">
+              <button class="flashcard-surface${startFlipped ? " is-flipped" : ""}" id="flashcard-surface" type="button">
+                <span class="flashcard-inner">
+                  <span class="flashcard-face flashcard-front">
+                    <div class="flashcard-face-header">
+                      <span class="flashcard-face-label">${t("front")}</span>
+                      <button type="button" class="flashcard-tts-btn" onclick="event.stopPropagation(); speakText('${escapeHtml(currentCard.q).replace(/'/g, "\\'")}')" title="Listen" aria-label="Listen front">🔊</button>
+                    </div>
+                    <span class="flashcard-face-text">${escapeHtml(currentCard.q)}</span>
+                  </span>
+                  <span class="flashcard-face flashcard-back">
+                    <div class="flashcard-face-header">
+                      <span class="flashcard-face-label">${t("back")}</span>
+                      <button type="button" class="flashcard-tts-btn" onclick="event.stopPropagation(); speakText('${escapeHtml(currentCard.a).replace(/'/g, "\\'")}')" title="Listen" aria-label="Listen back">🔊</button>
+                    </div>
+                    <span class="flashcard-face-text">${escapeHtml(currentCard.a)}</span>
+                  </span>
+                </span>
+              </button>
+            </div>
+            <p class="flashcard-hint">${t("flipHint")}</p>
+            <div class="flashcard-actions">
+              <button class="flashcard-decision flashcard-dont-know" id="flashcard-dont-know" type="button">${t("dontKnow")}</button>
+              <button class="flashcard-decision flashcard-know" id="flashcard-know" type="button">${t("know")}</button>
+            </div>
+          </div>
+        </section>
+      `;
+
+      const surface = document.getElementById("flashcard-surface");
+      const dontKnowButton = document.getElementById("flashcard-dont-know");
+      const knowButton = document.getElementById("flashcard-know");
+      let touchStartX = null;
+
+      surface.addEventListener("click", () => {
+        if (!suppressFlashcardClick) flipFlashcard();
+      });
+      surface.addEventListener("touchstart", event => {
+        touchStartX = event.changedTouches[0].clientX;
+      }, { passive: true });
+      surface.addEventListener("touchend", event => {
+        if (touchStartX === null) return;
+        const distance = event.changedTouches[0].clientX - touchStartX;
+        touchStartX = null;
+        if (Math.abs(distance) < 55) return;
+        suppressFlashcardClick = true;
+        handleFlashcardDecision(distance > 0);
+        setTimeout(() => { suppressFlashcardClick = false; }, 450);
+      }, { passive: true });
+
+      dontKnowButton.addEventListener("click", () => handleFlashcardDecision(false));
+      knowButton.addEventListener("click", () => handleFlashcardDecision(true));
+    }
+
+    function flipFlashcard() {
+      if (!flashcardSession || flashcardSession.locked) return;
+      const surface = document.getElementById("flashcard-surface");
+      if (surface) surface.classList.toggle("is-flipped");
+    }
+
+    function routeCardToLeitner(stack, cardId, isCorrect) {
+      stack.correctBox = stack.correctBox.filter(id => id !== cardId);
+      stack.wrongBox = stack.wrongBox.filter(id => id !== cardId);
+      if (isCorrect) stack.correctBox.push(cardId);
+      else stack.wrongBox.push(cardId);
+      persistState();
+    }
+
+    function handleFlashcardDecision(isCorrect) {
+      if (!flashcardSession || flashcardSession.locked) return;
+      const stack = state.stacks.find(s => s.id === flashcardSession.stackId);
+      const currentCard = flashcardSession.cards[flashcardSession.index];
+      const surface = document.getElementById("flashcard-surface");
+      if (!stack || !currentCard || !surface) return;
+
+      // Save previous state for UNDO
+      flashcardSession.undoHistory.push({
+        index: flashcardSession.index,
+        cardId: currentCard.id,
+        prevCorrectBox: [...stack.correctBox],
+        prevWrongBox: [...stack.wrongBox],
+        isCorrect
+      });
+
+      flashcardSession.locked = true;
+      const dkBtn = document.getElementById("flashcard-dont-know");
+      const kBtn = document.getElementById("flashcard-know");
+      if (dkBtn) dkBtn.disabled = true;
+      if (kBtn) kBtn.disabled = true;
+
+      routeCardToLeitner(stack, currentCard.id, isCorrect);
+      if (isCorrect) flashcardSession.correct++;
+      else flashcardSession.wrong++;
+
+      surface.classList.add(isCorrect ? "slide-right" : "slide-left");
+      setTimeout(() => {
+        if (!flashcardSession) return;
+        flashcardSession.index++;
+        if (flashcardSession.index >= flashcardSession.cards.length) {
+          finishFlashcardReview(false);
+        } else {
+          flashcardSession.locked = false;
+          renderFlashcardSession();
+        }
+      }, 360);
+    }
+
+    function undoFlashcardStep() {
+      if (!flashcardSession || flashcardSession.undoHistory.length === 0) return;
+      const last = flashcardSession.undoHistory.pop();
+      const stack = state.stacks.find(s => s.id === flashcardSession.stackId);
+      if (!stack) return;
+
+      // Restore stack Leitner boxes
+      stack.correctBox = last.prevCorrectBox;
+      stack.wrongBox = last.prevWrongBox;
+      persistState();
+
+      if (last.isCorrect) flashcardSession.correct = Math.max(0, flashcardSession.correct - 1);
+      else flashcardSession.wrong = Math.max(0, flashcardSession.wrong - 1);
+
+      flashcardSession.index = last.index;
+      flashcardSession.locked = false;
+      renderFlashcardSession();
+      showToast(t("undone"));
+    }
+
+    function finishFlashcardReview(cancelled) {
+      if (!flashcardSession) return;
+      const completed = flashcardSession;
+      const root = document.getElementById("app-root");
+      flashcardSession = null;
+
+      if (cancelled) {
+        openStackDetail(completed.stackId);
+        return;
+      }
+
+      root.innerHTML = `
+        <section class="flashcard-overlay" aria-label="Flashcard review summary">
+          <div class="flashcard-session">
+            <article class="flashcard-summary">
+              <h2>${t("reviewComplete")}</h2>
+              <p>${completed.correct} ${t("correctCards")}, ${completed.wrong} ${t("wrongCards")}</p>
+              <button class="btn btn-primary" type="button" onclick="openStackDetail('${escapeHtml(completed.stackId)}')">${t("returnToStack")}</button>
+            </article>
+          </div>
+        </section>
+      `;
+    }
+
+    // ============================================================
+    // TEST ENGINE (WITH KEYBOARD NUMBERS 1-4 & TTS)
+    // ============================================================
+    const MIN_TEST_CARDS = 2;
+    const MAX_TEST_OPTIONS = 4;
+
+    let activeTestStack = null;
+    let activeTestPool = [];
+    let activeTestIndex = 0;
+    let activeTestScore = 0;
+    let activeTestSource = "main";
+    let activeTestFace = "front";
+
+    function openTestConfigModal(stackId, source = "all") {
+      const stack = state.stacks.find(s => s.id === stackId);
+      if (!stack) return;
+
+      const pool = getReviewPool(stack, source);
+      if (pool.length < MIN_TEST_CARDS) {
+        showAlert(t("minCardsError"));
+        return;
+      }
+
+      showModal(t("configureTest"), `
+        <input type="hidden" id="session-stack-id" value="${escapeHtml(stackId)}" />
+        <input type="hidden" id="session-source" value="${escapeHtml(source)}" />
+        <label for="session-order">${t("order")}</label>
+        <select id="session-order">
+          <option value="sequential">${t("orderSeq")}</option>
+          <option value="random">${t("orderRand")}</option>
+        </select>
+        <label for="session-face">${t("firstFace")}</label>
+        <select id="session-face">
+          <option value="front">${t("front")}</option>
+          <option value="back">${t("back")}</option>
+        </select>
+        <div class="btn-row">
+          <button class="btn" type="button" onclick="closeModal()">${t("cancel")}</button>
+          <button class="btn btn-primary" type="button" onclick="confirmTestConfig()">Start</button>
+        </div>
+      `);
+    }
+
+    function confirmTestConfig() {
+      const stackId = document.getElementById("session-stack-id").value;
+      const source = document.getElementById("session-source").value;
+      const order = document.getElementById("session-order").value;
+      const face = document.getElementById("session-face").value;
+
+      const stack = state.stacks.find(s => s.id === stackId);
+      if (!stack) { closeModal(); return; }
+
+      let pool = getReviewPool(stack, source);
+      if (pool.length < MIN_TEST_CARDS) {
+        closeModal();
+        showAlert(t("minCardsError"));
+        return;
+      }
+      if (order === "random") pool = shuffleCards(pool.slice());
+
+      runTestSession(stack, pool, source === "wrong" ? "wrongBox" : "main", face);
+    }
+
+    function runTestSession(stack, pool, source, face = "front") {
+      closeModal();
+      activeTestStack = stack;
+      activeTestPool = pool.map(c => ({ ...c }));
+      activeTestSource = source;
+      activeTestFace = face === "back" ? "back" : "front";
+      activeTestIndex = 0;
+      activeTestScore = 0;
+      renderTestUI();
+    }
+
+    function exitTest() {
+      const stackId = activeTestStack ? activeTestStack.id : "";
+      activeTestStack = null;
+      activeTestPool = [];
+      activeTestIndex = 0;
+      activeTestScore = 0;
+      if (stackId) openStackDetail(stackId);
+      else renderApp();
+    }
+
+    function renderTestUI() {
+      const root = document.getElementById("app-root");
+      root.innerHTML = "";
+
+      const overlay = document.createElement("section");
+      overlay.className = "test-overlay";
+      overlay.setAttribute("aria-label", "Test session");
+      overlay.innerHTML = `
+        <article class="test-card" aria-live="polite" aria-atomic="true">
+          <div class="test-exit-row">
+            <button class="btn btn-sm" type="button" onclick="exitTest()">${t("exit")}</button>
+          </div>
+          <div class="test-progress" aria-label="Progress">
+            <span>Q ${activeTestIndex + 1} / ${activeTestPool.length}</span>
+            <div class="test-progress-bar">
+              <div class="test-progress-fill" style="width: ${((activeTestIndex) / activeTestPool.length) * 100}%"></div>
+            </div>
+          </div>
+          <div class="test-q-row">
+            <h2 class="test-question" id="test-q"></h2>
+            <button type="button" class="btn-icon" id="test-tts-btn" title="Listen question">🔊</button>
+          </div>
+          <div class="test-options" id="test-options" role="radiogroup"></div>
+        </article>
+      `;
+      root.appendChild(overlay);
+
+      const questionField = activeTestFace === "back" ? "a" : "q";
+      const optionField = activeTestFace === "back" ? "q" : "a";
+      const currentCard = activeTestPool[activeTestIndex];
+
+      overlay.querySelector("#test-q").textContent = currentCard[questionField];
+      overlay.querySelector("#test-tts-btn").onclick = () => speakText(currentCard[questionField]);
+
+      const distractorPool = activeTestPool.filter(c => c.id !== currentCard.id);
+      const optionCount = Math.min(MAX_TEST_OPTIONS, activeTestPool.length);
+      const distractors = [];
+      while (distractors.length < optionCount - 1 && distractorPool.length > 0) {
+        const idx = Math.floor(Math.random() * distractorPool.length);
+        distractors.push(distractorPool.splice(idx, 1)[0]);
+      }
+
+      const options = [currentCard, ...distractors];
+      for (let i = options.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [options[i], options[j]] = [options[j], options[i]];
+      }
+
+      const optionsContainer = overlay.querySelector("#test-options");
+      options.forEach((opt, idx) => {
+        const btn = document.createElement("button");
+        btn.className = "test-option-btn";
+        btn.dataset.cardId = opt.id;
+        btn.dataset.optionIdx = idx + 1;
+        btn.innerHTML = `
+          <span>${escapeHtml(opt[optionField])}</span>
+          <span class="test-key-tag">${idx + 1}</span>
+        `;
+        btn.onclick = () => handleTestAnswer(opt.id === currentCard.id, opt.id);
+        optionsContainer.appendChild(btn);
+      });
+    }
+
+    function handleTestAnswer(isCorrect, chosenId) {
+      const overlay = document.querySelector(".test-overlay");
+      if (!overlay) return;
+      const btns = overlay.querySelectorAll(".test-option-btn");
+      const currentCard = activeTestPool[activeTestIndex];
+
+      btns.forEach(b => {
+        b.disabled = true;
+        if (b.dataset.cardId === currentCard.id) b.classList.add("correct-guess");
+        else if (b.dataset.cardId === chosenId) b.classList.add("wrong-guess");
+      });
+
+      routeCardToLeitner(activeTestStack, currentCard.id, isCorrect);
+      if (isCorrect) activeTestScore++;
+
+      setTimeout(() => {
+        if (!activeTestStack) return;
+        activeTestIndex++;
+        if (activeTestIndex >= activeTestPool.length) {
+          showTestResults();
+        } else {
+          renderTestUI();
+        }
+      }, 750);
+    }
+
+    function showTestResults() {
+      const completedStackId = activeTestStack ? activeTestStack.id : "";
+      const total = activeTestPool.length;
+      const restartSource = activeTestSource === "wrongBox" ? "wrong" : "all";
+      const root = document.getElementById("app-root");
+      root.innerHTML = "";
+      const overlay = document.createElement("section");
+      overlay.className = "test-overlay";
+      overlay.innerHTML = `
+        <article class="test-card test-results">
+          <h3>${t("sessionComplete")}</h3>
+          <div class="score-ring">${activeTestScore} / ${total}</div>
+          <p>${activeTestScore} / ${total} correct</p>
+          <div style="display:flex; gap:0.75rem; justify-content:center;">
+            <button class="btn btn-primary" onclick="openStackDetail('${escapeHtml(completedStackId)}')">${t("returnToStack")}</button>
+            <button class="btn" onclick="openTestConfigModal('${escapeHtml(completedStackId)}', '${restartSource}')">${t("restartTest")}</button>
+          </div>
+        </article>
+      `;
+      root.appendChild(overlay);
+      activeTestStack = null;
+      activeTestPool = [];
+    }
+
+    // ============================================================
+    // GLOBAL KEYBOARD SHORTCUTS CONTROLLER
+    // ============================================================
+    document.addEventListener("keydown", (e) => {
+      const targetTag = e.target.tagName ? e.target.tagName.toLowerCase() : "";
+      const isInput = targetTag === "input" || targetTag === "textarea" || targetTag === "select";
+
+      // ESCAPE key handler
+      if (e.key === "Escape") {
+        if (currentModalBack) {
+          closeModal();
+          return;
+        }
+        if (flashcardSession) {
+          finishFlashcardReview(true);
+          return;
+        }
+        if (activeTestStack) {
+          exitTest();
+          return;
+        }
+      }
+
+      if (isInput) return; // don't trigger game keys while typing
+
+      // Flashcard shortcuts
+      if (flashcardSession && !flashcardSession.locked) {
+        if (e.code === "Space") {
+          e.preventDefault();
+          flipFlashcard();
+        } else if (e.key === "ArrowRight" || e.key === "2" || e.code === "KeyD") {
+          e.preventDefault();
+          handleFlashcardDecision(true);
+        } else if (e.key === "ArrowLeft" || e.key === "1" || e.code === "KeyA") {
+          e.preventDefault();
+          handleFlashcardDecision(false);
+        } else if (e.key === "z" || e.key === "Z") {
+          e.preventDefault();
+          undoFlashcardStep();
+        }
+      }
+
+      // Test Mode shortcuts (1, 2, 3, 4)
+      if (activeTestStack) {
+        if (["1", "2", "3", "4"].includes(e.key)) {
+          const btn = document.querySelector(`.test-option-btn[data-option-idx="${e.key}"]:not(:disabled)`);
+          if (btn) {
+            e.preventDefault();
+            btn.click();
+          }
+        }
+      }
+    });
+
+    // ============================================================
+    // MODAL & ALERTS
+    // ============================================================
+    let currentModalBack = null;
+    function showModal(title, htmlContent, modalClass = "") {
+      closeModal();
+      currentModalBack = document.createElement("section");
+      currentModalBack.className = "modal-backdrop";
+      currentModalBack.setAttribute("role", "dialog");
+      currentModalBack.setAttribute("aria-modal", "true");
+      currentModalBack.innerHTML = `
+        <div class="modal ${escapeHtml(modalClass)}" role="document">
+          <h2>${escapeHtml(title)}</h2>
+          <div>${htmlContent}</div>
+        </div>
+      `;
+      document.body.appendChild(currentModalBack);
+      setTimeout(() => {
+        if (!currentModalBack) return;
+        const input = currentModalBack.querySelector("input:not([type='hidden']), textarea");
+        if (input) input.focus();
+      }, 50);
+    }
+
+    function closeModal() {
+      if (currentModalBack) { currentModalBack.remove(); currentModalBack = null; }
+    }
+
+    function showAlert(message) {
+      const modalBack = document.createElement("section");
+      modalBack.className = "modal-backdrop";
+      modalBack.innerHTML = `
+        <div class="alert-modal" role="document">
+          <h3>Alert</h3>
+          <p>${escapeHtml(message)}</p>
+          <button class="btn btn-primary" onclick="this.closest('.modal-backdrop').remove()" style="margin-top:1.25rem;">OK</button>
+        </div>
+      `;
+      document.body.appendChild(modalBack);
+    }
+
+    function showToast(message) {
+      const existing = document.getElementById("app-toast");
+      if (existing) existing.remove();
+
+      const toast = document.createElement("div");
+      toast.className = "toast";
+      toast.id = "app-toast";
+      toast.textContent = message;
+      document.body.appendChild(toast);
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => toast.classList.add("visible"));
+      });
+      setTimeout(() => {
+        toast.classList.remove("visible");
+        setTimeout(() => toast.remove(), 300);
+      }, 2500);
+    }
+
+    // ============================================================
+    // STATE EXPORT & IMPORT (JSON)
+    // ============================================================
+    function triggerImport() {
+      document.getElementById("import-file").click();
+    }
+
+    function handleImportFile(input) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (!parsed.stacks || !Array.isArray(parsed.stacks)) {
+            showAlert("Invalid JSON file: missing 'stacks' array.");
+            return;
+          }
+          const migrated = migrateState(parsed);
+          state.stacks = migrated.stacks;
+          state.libraries = migrated.libraries;
+          persistState();
+          renderApp();
+          showToast(t("upload") + " OK");
+        } catch (err) {
+          showAlert("Failed to parse JSON file: " + err.message);
+        }
+        input.value = "";
+      };
+      reader.readAsText(file);
+    }
+
+    function triggerDownload() {
+      const blob = new Blob([JSON.stringify({ stacks: state.stacks, libraries: state.libraries }, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "cardlyo_save.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function resetHome() {
+      dashboardSearchQuery = "";
+      renderApp();
+    }
+
+    // ============================================================
+    // PWA SERVICE WORKER REGISTRATION
+    // ============================================================
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+
+    // ============================================================
+    // INIT
+    // ============================================================
+    initTheme();
+    loadPersistedState();
+    renderApp();
+  </script>
+</body>
+</html>
