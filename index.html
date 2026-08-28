@@ -1344,6 +1344,9 @@
     </a>
     
     <nav class="header-actions" aria-label="Global actions">
+      <button class="btn btn-sm" onclick="importFromClipboard()" aria-label="Paste deck from clipboard" title="Paste JSON from Clipboard">
+        <span aria-hidden="true">📋</span> <span data-i18n="paste">Paste</span>
+      </button>
       <button class="btn btn-sm" onclick="triggerImport()" aria-label="Upload state file" title="Upload JSON">
         <span aria-hidden="true">↑</span> <span data-i18n="upload">Upload</span>
       </button>
@@ -1377,6 +1380,7 @@
     // ============================================================
     const translations = {
       en: {
+        paste: "Paste",
         upload: "Upload",
         download: "Download",
         theme: "Dark",
@@ -1466,6 +1470,7 @@
         minFlashcardError: "Flashcard mode requires at least one card."
       },
       tr: {
+        paste: "Yapıştır",
         upload: "Yükle",
         download: "İndir",
         theme: "Koyu",
@@ -3357,6 +3362,89 @@
       document.getElementById("import-file").click();
     }
 
+    const processedSyncIds = new Set();
+
+    function importData(parsed) {
+      if (!parsed || !parsed.stacks || !Array.isArray(parsed.stacks)) return false;
+
+      // Deduplication guard: ignore repeated triggers for the exact same sync event
+      const syncId = parsed.syncId || (parsed.timestamp ? String(parsed.timestamp) : null);
+      if (syncId) {
+        if (processedSyncIds.has(syncId)) return false;
+        processedSyncIds.add(syncId);
+        setTimeout(() => processedSyncIds.delete(syncId), 8000);
+      }
+
+      const migrated = migrateState(parsed);
+
+      // Merge libraries without overwriting existing ones
+      const libIdMap = {};
+      let addedLibsCount = 0;
+      (migrated.libraries || []).forEach(importedLib => {
+        if (!importedLib || !importedLib.title) return;
+        const existingSameId = state.libraries.find(l => l.id === importedLib.id);
+        if (existingSameId) {
+          if (existingSameId.title.trim().toLowerCase() === importedLib.title.trim().toLowerCase()) {
+            libIdMap[importedLib.id] = existingSameId.id;
+          } else {
+            const newLibId = generateId("lib");
+            libIdMap[importedLib.id] = newLibId;
+            state.libraries.push({ ...importedLib, id: newLibId });
+            addedLibsCount++;
+          }
+        } else {
+          libIdMap[importedLib.id] = importedLib.id;
+          state.libraries.push({ ...importedLib });
+          addedLibsCount++;
+        }
+      });
+
+      // Merge stacks without overwriting existing ones
+      let addedStacksCount = 0;
+      (migrated.stacks || []).forEach(importedStack => {
+        if (!importedStack || !importedStack.title) return;
+
+        let targetLibId = importedStack.libraryId;
+        if (targetLibId && libIdMap[targetLibId]) {
+          targetLibId = libIdMap[targetLibId];
+        } else if (targetLibId && !state.libraries.some(l => l.id === targetLibId)) {
+          targetLibId = null;
+        }
+
+        // Generate unique card IDs to prevent any ID collisions
+        const cardIdMap = {};
+        const newCards = (importedStack.cards || []).map(c => {
+          const newCId = generateId("c");
+          cardIdMap[c.id] = newCId;
+          return { id: newCId, q: c.q || "", a: c.a || "" };
+        });
+
+        const newCorrectBox = (importedStack.correctBox || []).map(oldId => cardIdMap[oldId] || oldId).filter(id => newCards.some(c => c.id === id));
+        const newWrongBox = (importedStack.wrongBox || []).map(oldId => cardIdMap[oldId] || oldId).filter(id => newCards.some(c => c.id === id));
+
+        const newStackId = generateId("stack");
+        state.stacks.push({
+          id: newStackId,
+          title: importedStack.title || "Untitled Stack",
+          description: importedStack.description || "",
+          libraryId: targetLibId,
+          cards: newCards,
+          correctBox: newCorrectBox,
+          wrongBox: newWrongBox
+        });
+        addedStacksCount++;
+      });
+
+      persistState();
+      renderApp();
+
+      const toastMsg = currentLang === "tr"
+        ? `${addedStacksCount} deste${addedLibsCount > 0 ? ` ve ${addedLibsCount} kütüphane` : ""} eklendi`
+        : `Added ${addedStacksCount} stack(s)${addedLibsCount > 0 ? ` and ${addedLibsCount} library(ies)` : ""}`;
+      showToast(toastMsg);
+      return true;
+    }
+
     function handleImportFile(input) {
       const file = input.files && input.files[0];
       if (!file) return;
@@ -3368,73 +3456,7 @@
             showAlert("Invalid JSON file: missing 'stacks' array.");
             return;
           }
-          const migrated = migrateState(parsed);
-
-          // Merge libraries without overwriting existing ones
-          const libIdMap = {};
-          let addedLibsCount = 0;
-          (migrated.libraries || []).forEach(importedLib => {
-            if (!importedLib || !importedLib.title) return;
-            const existingSameId = state.libraries.find(l => l.id === importedLib.id);
-            if (existingSameId) {
-              if (existingSameId.title.trim().toLowerCase() === importedLib.title.trim().toLowerCase()) {
-                libIdMap[importedLib.id] = existingSameId.id;
-              } else {
-                const newLibId = generateId("lib");
-                libIdMap[importedLib.id] = newLibId;
-                state.libraries.push({ ...importedLib, id: newLibId });
-                addedLibsCount++;
-              }
-            } else {
-              libIdMap[importedLib.id] = importedLib.id;
-              state.libraries.push({ ...importedLib });
-              addedLibsCount++;
-            }
-          });
-
-          // Merge stacks without overwriting existing ones
-          let addedStacksCount = 0;
-          (migrated.stacks || []).forEach(importedStack => {
-            if (!importedStack || !importedStack.title) return;
-
-            let targetLibId = importedStack.libraryId;
-            if (targetLibId && libIdMap[targetLibId]) {
-              targetLibId = libIdMap[targetLibId];
-            } else if (targetLibId && !state.libraries.some(l => l.id === targetLibId)) {
-              targetLibId = null;
-            }
-
-            // Generate unique card IDs to prevent any ID collisions
-            const cardIdMap = {};
-            const newCards = (importedStack.cards || []).map(c => {
-              const newCId = generateId("c");
-              cardIdMap[c.id] = newCId;
-              return { id: newCId, q: c.q || "", a: c.a || "" };
-            });
-
-            const newCorrectBox = (importedStack.correctBox || []).map(oldId => cardIdMap[oldId] || oldId).filter(id => newCards.some(c => c.id === id));
-            const newWrongBox = (importedStack.wrongBox || []).map(oldId => cardIdMap[oldId] || oldId).filter(id => newCards.some(c => c.id === id));
-
-            const newStackId = generateId("stack");
-            state.stacks.push({
-              id: newStackId,
-              title: importedStack.title || "Untitled Stack",
-              description: importedStack.description || "",
-              libraryId: targetLibId,
-              cards: newCards,
-              correctBox: newCorrectBox,
-              wrongBox: newWrongBox
-            });
-            addedStacksCount++;
-          });
-
-          persistState();
-          renderApp();
-
-          const toastMsg = currentLang === "tr"
-            ? `${addedStacksCount} deste${addedLibsCount > 0 ? ` ve ${addedLibsCount} kütüphane` : ""} eklendi`
-            : `Added ${addedStacksCount} stack(s)${addedLibsCount > 0 ? ` and ${addedLibsCount} library(ies)` : ""}`;
-          showToast(toastMsg);
+          importData(parsed);
         } catch (err) {
           showAlert("Failed to parse JSON file: " + err.message);
         }
@@ -3461,6 +3483,83 @@
     }
 
     // ============================================================
+    // CLIPBOARD IMPORT & CROSS-APP SYNC (LexiRead -> Cardlyo)
+    // ============================================================
+    async function importFromClipboard() {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (!text || !text.trim()) {
+          showAlert(currentLang === "tr" ? "Pano boş." : "Clipboard is empty.");
+          return;
+        }
+        const parsed = JSON.parse(text);
+        if (!parsed.stacks || !Array.isArray(parsed.stacks)) {
+          showAlert(currentLang === "tr" ? "Panodaki veri geçerli bir Cardlyo destesi değil." : "Invalid Cardlyo deck JSON in clipboard.");
+          return;
+        }
+        importData(parsed);
+      } catch (err) {
+        showAlert(currentLang === "tr" ? "Panoya doğrudan erişilemedi. Lütfen sayfaya tıklayıp klavyeden Ctrl+V tuşlarına basın." : "Could not read clipboard. Please click anywhere on the page and press Ctrl+V.");
+      }
+    }
+
+    // Global Paste Listener (Ctrl+V anywhere on page)
+    document.addEventListener("paste", (e) => {
+      const activeTag = document.activeElement?.tagName?.toLowerCase();
+      if (activeTag === "input" || activeTag === "textarea" || document.activeElement?.isContentEditable) {
+        return;
+      }
+      const text = e.clipboardData?.getData("text");
+      if (!text) return;
+      try {
+        const parsed = JSON.parse(text);
+        if (parsed && parsed.stacks && Array.isArray(parsed.stacks)) {
+          e.preventDefault();
+          importData(parsed);
+        }
+      } catch (_) {}
+    });
+
+    try {
+      const syncChannel = new BroadcastChannel('cardlyo_sync');
+      syncChannel.onmessage = (e) => {
+        if (e.data && e.data.type === 'IMPORT_DECK' && e.data.payload) {
+          importData(e.data.payload);
+        }
+      };
+    } catch (_) {}
+
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'cardlyo_import_deck' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (parsed && parsed.data) {
+            importData(parsed.data);
+          }
+        } catch (_) {}
+      }
+    });
+
+    window.addEventListener('message', (e) => {
+      if (e.data && (e.data.type === 'IMPORT_DECK' || e.data.type === 'cardlyo_import') && e.data.payload) {
+        importData(e.data.payload);
+      }
+    });
+
+    // Check URL query/hash for payload on direct launch
+    function checkIncomingUrlDeck() {
+      try {
+        const hash = window.location.hash;
+        if (hash && hash.startsWith('#import=')) {
+          const jsonStr = decodeURIComponent(hash.replace('#import=', ''));
+          const payload = JSON.parse(jsonStr);
+          importData(payload);
+          window.location.hash = '';
+        }
+      } catch (_) {}
+    }
+
+    // ============================================================
     // PWA SERVICE WORKER REGISTRATION
     // ============================================================
     if ('serviceWorker' in navigator) {
@@ -3475,6 +3574,7 @@
     initTheme();
     loadPersistedState();
     renderApp();
+    checkIncomingUrlDeck();
   </script>
 </body>
 </html>
