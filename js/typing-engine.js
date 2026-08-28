@@ -126,8 +126,48 @@ function renderTypingUI() {
   }, 60);
 }
 
+// Normalizes punctuation and casing
 function normalizeAnswer(str) {
-  return (str || "").trim().toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()?"']/g, "").replace(/\s+/g, " ");
+  return (str || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[.,/#!$%^&*;:{}=\-_`~()?"'’]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// Generates all acceptable answers from answer separators (/ ; ,) and optional descriptions (( ) [ ])
+function getAcceptableAnswers(rawTarget) {
+  if (!rawTarget) return [];
+  const rawSegments = rawTarget.split(/[/;,]/).map(s => s.trim()).filter(Boolean);
+  const acceptable = new Set();
+
+  acceptable.add(normalizeAnswer(rawTarget));
+
+  rawSegments.forEach(segment => {
+    // 1. Full segment
+    const normFull = normalizeAnswer(segment);
+    if (normFull) acceptable.add(normFull);
+
+    // 2. Segment with parentheses / brackets removed
+    const stripped = segment.replace(/\([^)]*\)/g, ' ').replace(/\[[^\]]*\]/g, ' ').replace(/\s+/g, ' ').trim();
+    const normStripped = normalizeAnswer(stripped);
+    if (normStripped) acceptable.add(normStripped);
+
+    // 3. Segment with only parenthesis symbols stripped (e.g. "(to) see" -> "to see")
+    const unparenthesized = segment.replace(/[()\[\]]/g, ' ').replace(/\s+/g, ' ').trim();
+    const normUnparenthesized = normalizeAnswer(unparenthesized);
+    if (normUnparenthesized) acceptable.add(normUnparenthesized);
+  });
+
+  return Array.from(acceptable).filter(Boolean);
+}
+
+function isTypingAnswerCorrect(typed, target) {
+  const normalizedTyped = normalizeAnswer(typed);
+  if (!normalizedTyped) return false;
+  const acceptable = getAcceptableAnswers(target);
+  return acceptable.includes(normalizedTyped);
 }
 
 function handleTypingSubmit(e) {
@@ -152,7 +192,7 @@ function handleTypingSubmit(e) {
   const typedVal = inputEl.value.trim();
   if (!typedVal) return;
 
-  const isMatch = normalizeAnswer(typedVal) === normalizeAnswer(targetAnswer);
+  const isMatch = isTypingAnswerCorrect(typedVal, targetAnswer);
 
   typingSession.submitted = true;
   typingSession.lastCorrect = isMatch;
@@ -168,30 +208,41 @@ function handleTypingSubmit(e) {
     inputEl.disabled = true;
     feedbackBox.innerHTML = `
       <div class="typing-feedback correct">
-        <strong>✓ ${currentLang === 'tr' ? 'Doğru!' : 'Correct!'}</strong>
+        <div style="font-weight:800; font-size:1.05rem; margin-bottom:0.4rem;">✓ ${currentLang === 'tr' ? 'Doğru!' : 'Correct!'}</div>
+        <div class="typing-diff-row">
+          <div class="typing-diff-item">
+            <span class="typing-diff-label">${currentLang === 'tr' ? 'Yazdığınız:' : 'You typed:'}</span>
+            <span class="typing-diff-val" style="color:var(--success); font-weight:700;">${escapeHtml(typedVal)}</span>
+          </div>
+          <div class="typing-diff-item">
+            <span class="typing-diff-label">${currentLang === 'tr' ? 'Tam Anlamı:' : 'Full Answer:'}</span>
+            <span class="typing-diff-val" style="color:var(--fg); font-weight:600;">${escapeHtml(targetAnswer)}</span>
+          </div>
+        </div>
       </div>
     `;
     submitBtn.textContent = currentLang === 'tr' ? 'Devam Et →' : 'Continue →';
     submitBtn.focus();
 
+    const curIndex = typingSession.index;
     setTimeout(() => {
-      if (typingSession && typingSession.submitted) {
+      if (typingSession && typingSession.submitted && typingSession.index === curIndex) {
         advanceTypingCard();
       }
-    }, 850);
+    }, 1500);
   } else {
     typingSession.wrong++;
     inputEl.disabled = true;
     feedbackBox.innerHTML = `
       <div class="typing-feedback wrong">
-        <div style="font-weight:800; color:var(--danger); margin-bottom:0.4rem;">✗ ${currentLang === 'tr' ? 'Yanlış' : 'Incorrect'}</div>
+        <div style="font-weight:800; font-size:1.05rem; color:var(--danger); margin-bottom:0.4rem;">✗ ${currentLang === 'tr' ? 'Yanlış' : 'Incorrect'}</div>
         <div class="typing-diff-row">
           <div class="typing-diff-item">
             <span class="typing-diff-label">${currentLang === 'tr' ? 'Yazdığınız:' : 'You typed:'}</span>
             <span class="typing-diff-val wrong-val">${escapeHtml(typedVal)}</span>
           </div>
           <div class="typing-diff-item">
-            <span class="typing-diff-label">${currentLang === 'tr' ? 'Doğru cevap:' : 'Correct answer:'}</span>
+            <span class="typing-diff-label">${currentLang === 'tr' ? 'Doğru Cevap:' : 'Correct answer:'}</span>
             <span class="typing-diff-val correct-val">${escapeHtml(targetAnswer)}</span>
           </div>
         </div>
