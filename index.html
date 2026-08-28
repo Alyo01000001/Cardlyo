@@ -661,7 +661,9 @@
     }
     .stat-box-wrong.is-disabled .stat-box-value { color: var(--fg-subtle); }
 
-    /* Flashcard Review */
+    /* ============================================
+       FLASHCARD 3D FLIP ENGINE (PERFECTED)
+    ============================================ */
     .flashcard-overlay {
       position: fixed;
       inset: 0;
@@ -692,23 +694,27 @@
       align-items: center;
       gap: 0.5rem;
     }
+
     .flashcard-scene {
       width: 100%;
-      min-height: 330px;
+      height: 340px;
       perspective: 1200px;
+      -webkit-perspective: 1200px;
     }
     .flashcard-surface {
-      display: block;
+      position: relative;
       width: 100%;
-      min-height: 330px;
+      height: 100%;
       padding: 0;
       border: 0;
       border-radius: var(--radius-lg);
       background: transparent;
       cursor: pointer;
       color: var(--fg);
-      transform: translateX(0) rotate(0deg);
+      transform-style: preserve-3d;
+      -webkit-transform-style: preserve-3d;
       transition: transform 360ms cubic-bezier(.2,.8,.2,1), opacity 360ms ease;
+      user-select: none;
     }
     .flashcard-surface:focus-visible {
       outline: 3px solid var(--primary);
@@ -722,74 +728,103 @@
       opacity: 0;
       transform: translateX(115%) rotate(7deg);
     }
+
     .flashcard-inner {
-      display: block;
       position: relative;
       width: 100%;
-      min-height: 330px;
+      height: 100%;
       transform-style: preserve-3d;
-      transition: transform 460ms cubic-bezier(.2,.75,.25,1);
+      -webkit-transform-style: preserve-3d;
+      transition: transform 480ms cubic-bezier(.2,.75,.25,1);
     }
-    .flashcard-surface.is-flipped .flashcard-inner { transform: rotateY(180deg); }
+    .flashcard-surface.is-flipped .flashcard-inner {
+      transform: rotateY(180deg);
+      -webkit-transform: rotateY(180deg);
+    }
+
     .flashcard-face {
       position: absolute;
-      inset: 0;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 2.5rem;
+      padding: 2.5rem 2rem;
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
       background: var(--surface);
       box-shadow: var(--shadow-lg);
       backface-visibility: hidden;
       -webkit-backface-visibility: hidden;
+      box-sizing: border-box;
+      overflow: hidden;
     }
-    .flashcard-face-header {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
-    }
-    .flashcard-face-label {
-      color: var(--fg-subtle);
-      font-size: 0.75rem;
-      font-weight: 800;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-    }
-    .flashcard-tts-btn {
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      width: 28px;
-      height: 28px;
-      display: grid;
-      place-items: center;
-      cursor: pointer;
-      font-size: 0.85rem;
-      color: var(--fg-muted);
-      transition: all var(--transition);
-    }
-    .flashcard-tts-btn:hover {
-      color: var(--primary);
-      border-color: var(--primary);
-    }
-    .flashcard-face-text {
-      max-width: 100%;
-      overflow-wrap: anywhere;
-      font-family: var(--font-display);
-      font-size: clamp(1.7rem, 7vw, 2.7rem);
-      font-weight: 700;
-      line-height: 1.18;
-      letter-spacing: -0.025em;
-      text-align: center;
+    .flashcard-front {
+      transform: rotateY(0deg);
+      -webkit-transform: rotateY(0deg);
     }
     .flashcard-back {
       background: var(--surface-2);
       transform: rotateY(180deg);
+      -webkit-transform: rotateY(180deg);
     }
+
+    .flashcard-face-header {
+      position: absolute;
+      top: 1.25rem;
+      left: 1.5rem;
+      right: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      pointer-events: auto;
+    }
+    .flashcard-face-label {
+      color: var(--fg-subtle);
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .flashcard-tts-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      font-size: 0.95rem;
+      color: var(--fg-muted);
+      transition: all var(--transition);
+      box-shadow: var(--shadow-sm);
+    }
+    .flashcard-tts-btn:hover {
+      color: var(--primary);
+      border-color: var(--primary);
+      transform: scale(1.08);
+    }
+
+    .flashcard-face-text {
+      width: 100%;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      font-family: var(--font-display);
+      font-size: clamp(1.7rem, 6vw, 2.6rem);
+      font-weight: 700;
+      line-height: 1.25;
+      letter-spacing: -0.025em;
+      text-align: center;
+      padding: 0 1rem;
+    }
+
     .flashcard-hint {
       margin: 1rem 0;
       color: var(--fg-subtle);
@@ -802,7 +837,7 @@
       gap: 0.75rem;
     }
     .flashcard-decision {
-      min-height: 50px;
+      min-height: 52px;
       border-radius: var(--radius-sm);
       color: #fff;
       font-size: 0.95rem;
@@ -1290,10 +1325,7 @@
       .modal-backdrop { padding: 0.75rem; align-items: flex-start; }
       .modal { max-width: 100%; padding: 1.25rem; }
       .flashcard-overlay { padding: 0.75rem; }
-      .flashcard-scene, .flashcard-surface, .flashcard-inner {
-        height: clamp(220px, 48vh, 400px);
-        min-height: 0;
-      }
+      .flashcard-scene { height: clamp(230px, 48vh, 380px); }
       .flashcard-face-text { font-size: clamp(1.4rem, 8vw, 2.1rem); }
       .stack-view-header { flex-direction: column; align-items: flex-start; }
       .stack-view-actions .btn { width: 100%; }
@@ -1355,6 +1387,7 @@
         librariesSub: "Group related stacks into folders",
         noLibraries: "No libraries yet. Create one to organize your stacks into folders.",
         stacks: "Stacks",
+        stackcount: "stacks",
         addStack: "+ Add Stack",
         stacksSub: "Drag a stack onto a library to file it away",
         noStacksTitle: "No stacks yet",
@@ -1401,7 +1434,7 @@
         cancel: "Cancel",
         save: "Save",
         create: "Create",
-        delete: "Delete",
+        delete: "Delete Library",
         cardUpdated: "Card updated",
         cardDeleted: "Card deleted",
         cardsImported: "cards imported",
@@ -1443,6 +1476,7 @@
         librariesSub: "Destelerinizi klasörler halinde düzenleyin",
         noLibraries: "Henüz kütüphane yok. Desteleri gruplamak için bir tane oluşturun.",
         stacks: "Desteler",
+        stackcount: "Deste",
         addStack: "+ Deste Ekle",
         stacksSub: "Bir desteyi taşımak için kütüphane üzerine sürükleyin",
         noStacksTitle: "Henüz deste yok",
@@ -1489,7 +1523,7 @@
         cancel: "İptal",
         save: "Kaydet",
         create: "Oluştur",
-        delete: "Sil",
+        delete: "Kütüphaneyi Sil",
         cardUpdated: "Kart güncellendi",
         cardDeleted: "Kart silindi",
         cardsImported: "kart içe aktarıldı",
@@ -1596,10 +1630,9 @@
     // ============================================================
     function speakText(text, lang = null) {
       if (!('speechSynthesis' in window) || !text) return;
-      window.speechSynthesis.cancel(); // cancel previous
+      window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       if (lang) utterance.lang = lang;
-      else if (/[\u00C0-\u017F]/.test(text)) utterance.lang = "es-ES";
       window.speechSynthesis.speak(utterance);
     }
 
@@ -1717,7 +1750,7 @@
           <span class="library-text">
             <span class="library-title">${escapeHtml(library.title)}</span>
             <span class="library-description">${escapeHtml(getLibraryDescription(library))}</span>
-            <span class="library-stack-count">${stackCount} ${t("stacks").toLowerCase()}</span>
+            <span class="library-stack-count">${stackCount} ${t("stackcount").toLowerCase()}</span>
           </span>
         </button>
       `;
@@ -1731,7 +1764,6 @@
     }
 
     function renderDashboard(container) {
-      // Search Bar
       const searchRow = document.createElement("div");
       searchRow.className = "search-filter-bar";
       searchRow.innerHTML = `
@@ -1865,7 +1897,7 @@
       actions.className = "stack-view-actions";
       actions.innerHTML = `
         <button class="btn btn-sm btn-primary" onclick="openAddStackModal('${escapeHtml(library.id)}')">+ ${t("addStack")}</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteLibrary('${escapeHtml(library.id)}')">${t("delete")} Library</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteLibrary('${escapeHtml(library.id)}')">${t("delete")}</button>
       `;
       root.appendChild(actions);
 
@@ -1980,6 +2012,10 @@
       `;
       root.appendChild(filterBar);
 
+      const tableWrap = document.createElement("div");
+      tableWrap.className = "cards-table-wrap";
+      root.appendChild(tableWrap);
+
       const searchInput = filterBar.querySelector("#stack-card-search");
       const filterSelect = filterBar.querySelector("#stack-status-filter");
 
@@ -1991,10 +2027,6 @@
         stackStatusFilter = e.target.value;
         renderCardsTable(stack, tableWrap);
       });
-
-      const tableWrap = document.createElement("div");
-      tableWrap.className = "cards-table-wrap";
-      root.appendChild(tableWrap);
 
       renderCardsTable(stack, tableWrap);
     }
@@ -2638,7 +2670,6 @@
       const cards = [];
       lines.forEach((line, idx) => {
         if (!line.trim()) return;
-        // Check for TSV vs CSV
         let parts = line.split("\t");
         if (parts.length < 2) {
           parts = line.split(",");
@@ -2646,7 +2677,6 @@
         if (parts.length >= 2) {
           const q = parts[0].replace(/^["']|["']$/g, '').trim();
           const a = parts[1].replace(/^["']|["']$/g, '').trim();
-          // skip header if "Front" / "Back"
           if (idx === 0 && q.toLowerCase() === "front" && a.toLowerCase() === "back") return;
           if (q && a) cards.push({ q, a });
         }
@@ -2742,7 +2772,7 @@
     }
 
     // ============================================================
-    // FLASHCARD REVIEW (WITH UNDO & TTS & KEYBOARD SHORTCUTS)
+    // FLASHCARD REVIEW (WITH PROPER 3D FLIP, UNDO & TTS)
     // ============================================================
     let flashcardSession = null;
     let suppressFlashcardClick = false;
@@ -2860,24 +2890,24 @@
               </div>
             </div>
             <div class="flashcard-scene">
-              <button class="flashcard-surface${startFlipped ? " is-flipped" : ""}" id="flashcard-surface" type="button">
-                <span class="flashcard-inner">
-                  <span class="flashcard-face flashcard-front">
+              <div class="flashcard-surface${startFlipped ? " is-flipped" : ""}" id="flashcard-surface" role="button" tabindex="0" aria-label="Flip flashcard">
+                <div class="flashcard-inner">
+                  <div class="flashcard-face flashcard-front">
                     <div class="flashcard-face-header">
                       <span class="flashcard-face-label">${t("front")}</span>
                       <button type="button" class="flashcard-tts-btn" onclick="event.stopPropagation(); speakText('${escapeHtml(currentCard.q).replace(/'/g, "\\'")}')" title="Listen" aria-label="Listen front">🔊</button>
                     </div>
-                    <span class="flashcard-face-text">${escapeHtml(currentCard.q)}</span>
-                  </span>
-                  <span class="flashcard-face flashcard-back">
+                    <div class="flashcard-face-text">${escapeHtml(currentCard.q)}</div>
+                  </div>
+                  <div class="flashcard-face flashcard-back">
                     <div class="flashcard-face-header">
                       <span class="flashcard-face-label">${t("back")}</span>
                       <button type="button" class="flashcard-tts-btn" onclick="event.stopPropagation(); speakText('${escapeHtml(currentCard.a).replace(/'/g, "\\'")}')" title="Listen" aria-label="Listen back">🔊</button>
                     </div>
-                    <span class="flashcard-face-text">${escapeHtml(currentCard.a)}</span>
-                  </span>
-                </span>
-              </button>
+                    <div class="flashcard-face-text">${escapeHtml(currentCard.a)}</div>
+                  </div>
+                </div>
+              </div>
             </div>
             <p class="flashcard-hint">${t("flipHint")}</p>
             <div class="flashcard-actions">
@@ -2972,7 +3002,6 @@
       const stack = state.stacks.find(s => s.id === flashcardSession.stackId);
       if (!stack) return;
 
-      // Restore stack Leitner boxes
       stack.correctBox = last.prevCorrectBox;
       stack.wrongBox = last.prevWrongBox;
       persistState();
@@ -3230,7 +3259,7 @@
         }
       }
 
-      if (isInput) return; // don't trigger game keys while typing
+      if (isInput) return;
 
       // Flashcard shortcuts
       if (flashcardSession && !flashcardSession.locked) {
@@ -3340,11 +3369,72 @@
             return;
           }
           const migrated = migrateState(parsed);
-          state.stacks = migrated.stacks;
-          state.libraries = migrated.libraries;
+
+          // Merge libraries without overwriting existing ones
+          const libIdMap = {};
+          let addedLibsCount = 0;
+          (migrated.libraries || []).forEach(importedLib => {
+            if (!importedLib || !importedLib.title) return;
+            const existingSameId = state.libraries.find(l => l.id === importedLib.id);
+            if (existingSameId) {
+              if (existingSameId.title.trim().toLowerCase() === importedLib.title.trim().toLowerCase()) {
+                libIdMap[importedLib.id] = existingSameId.id;
+              } else {
+                const newLibId = generateId("lib");
+                libIdMap[importedLib.id] = newLibId;
+                state.libraries.push({ ...importedLib, id: newLibId });
+                addedLibsCount++;
+              }
+            } else {
+              libIdMap[importedLib.id] = importedLib.id;
+              state.libraries.push({ ...importedLib });
+              addedLibsCount++;
+            }
+          });
+
+          // Merge stacks without overwriting existing ones
+          let addedStacksCount = 0;
+          (migrated.stacks || []).forEach(importedStack => {
+            if (!importedStack || !importedStack.title) return;
+
+            let targetLibId = importedStack.libraryId;
+            if (targetLibId && libIdMap[targetLibId]) {
+              targetLibId = libIdMap[targetLibId];
+            } else if (targetLibId && !state.libraries.some(l => l.id === targetLibId)) {
+              targetLibId = null;
+            }
+
+            // Generate unique card IDs to prevent any ID collisions
+            const cardIdMap = {};
+            const newCards = (importedStack.cards || []).map(c => {
+              const newCId = generateId("c");
+              cardIdMap[c.id] = newCId;
+              return { id: newCId, q: c.q || "", a: c.a || "" };
+            });
+
+            const newCorrectBox = (importedStack.correctBox || []).map(oldId => cardIdMap[oldId] || oldId).filter(id => newCards.some(c => c.id === id));
+            const newWrongBox = (importedStack.wrongBox || []).map(oldId => cardIdMap[oldId] || oldId).filter(id => newCards.some(c => c.id === id));
+
+            const newStackId = generateId("stack");
+            state.stacks.push({
+              id: newStackId,
+              title: importedStack.title || "Untitled Stack",
+              description: importedStack.description || "",
+              libraryId: targetLibId,
+              cards: newCards,
+              correctBox: newCorrectBox,
+              wrongBox: newWrongBox
+            });
+            addedStacksCount++;
+          });
+
           persistState();
           renderApp();
-          showToast(t("upload") + " OK");
+
+          const toastMsg = currentLang === "tr"
+            ? `${addedStacksCount} deste${addedLibsCount > 0 ? ` ve ${addedLibsCount} kütüphane` : ""} eklendi`
+            : `Added ${addedStacksCount} stack(s)${addedLibsCount > 0 ? ` and ${addedLibsCount} library(ies)` : ""}`;
+          showToast(toastMsg);
         } catch (err) {
           showAlert("Failed to parse JSON file: " + err.message);
         }
