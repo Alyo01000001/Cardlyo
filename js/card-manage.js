@@ -11,7 +11,7 @@ let parsedCsvCards = [];
 function processImageFile(file, maxWidth = 800, maxHeight = 800, quality = 0.82) {
   return new Promise((resolve, reject) => {
     if (!file || !file.type.startsWith('image/')) {
-      return reject(new Error('Selected file is not an image'));
+      return reject(new Error(currentLang === 'tr' ? 'Seçilen dosya bir resim değil' : 'Selected file is not an image'));
     }
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -35,10 +35,10 @@ function processImageFile(file, maxWidth = 800, maxHeight = 800, quality = 0.82)
         const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
         resolve(compressedDataUrl);
       };
-      img.onerror = () => reject(new Error('Failed to load image'));
+      img.onerror = () => reject(new Error(currentLang === 'tr' ? 'Resim yüklenemedi' : 'Failed to load image'));
       img.src = e.target.result;
     };
-    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.onerror = () => reject(new Error(currentLang === 'tr' ? 'Dosya okunamadı' : 'Failed to read file'));
     reader.readAsDataURL(file);
   });
 }
@@ -76,7 +76,7 @@ async function handleImgFileSelected(target, input) {
     }
     renderImgPreview(target);
   } catch (err) {
-    showAlert("Failed to process image: " + err.message);
+    showAlert((currentLang === 'tr' ? 'Görsel işlenirken hata oluştu: ' : 'Failed to process image: ') + err.message);
   }
 }
 
@@ -145,12 +145,36 @@ function renderImgPreview(target) {
   `;
 }
 
+function getBulkPlaceholder(sideSepRaw, cardSepRaw) {
+  const sideSep = (typeof sideSepRaw === "string" && sideSepRaw !== "") ? sideSepRaw : ".";
+  const cardSep = (typeof cardSepRaw === "string" && cardSepRaw !== "") ? cardSepRaw : "\n";
+
+  let samplePairs = [];
+  if (currentLang === "tr") {
+    samplePairs = [
+      ["to go", "gitmek"],
+      ["to swim", "yüzmek"],
+      ["to learn", "öğrenmek"]
+    ];
+  } else {
+    samplePairs = [
+      ["sein", "to be"],
+      ["haben", "to have"],
+      ["lernen", "to learn"]
+    ];
+  }
+
+  return samplePairs.map(([front, back]) => `${front}${sideSep}${back}`).join(cardSep);
+}
+
 function openAddCardModal(stackId) {
   const stack = state.stacks.find(s => s.id === stackId);
   if (!stack) return;
 
   newCardImgQ = "";
   newCardImgA = "";
+
+  const initialPlaceholder = getBulkPlaceholder(".", "");
 
   showModal(t("addCardsTitle"), `
     <input type="hidden" id="new-card-stack" value="${escapeHtml(stackId)}" />
@@ -163,7 +187,7 @@ function openAddCardModal(stackId) {
 
     <div class="tab-panel active" data-tab="single" role="tabpanel">
       <label for="new-card-q">${t("front")}</label>
-      <input type="text" id="new-card-q" placeholder="e.g., **sein** (to be)" value="" />
+      <input type="text" id="new-card-q" placeholder="${currentLang === 'tr' ? 'örn: **sein** (olmak)' : 'e.g., **sein** (to be)'}" value="" />
       
       <label>${t("imageOptional")} - ${t("front")}</label>
       <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
@@ -174,7 +198,7 @@ function openAddCardModal(stackId) {
       <div id="add-q-preview-wrap"></div>
 
       <label for="new-card-a">${t("back")}</label>
-      <input type="text" id="new-card-a" placeholder="e.g., to be" value="" />
+      <input type="text" id="new-card-a" placeholder="${currentLang === 'tr' ? 'örn: olmak' : 'e.g., to be'}" value="" />
 
       <label>${t("imageOptional")} - ${t("back")}</label>
       <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
@@ -194,8 +218,8 @@ function openAddCardModal(stackId) {
     </div>
 
     <div class="tab-panel" data-tab="bulk" role="tabpanel">
-      <label class="bulk-label" for="bulk-raw-text">Raw Text</label>
-      <textarea class="bulk-textarea" id="bulk-raw-text" placeholder="to go.gitmek&#10;to swim.yüzmek" spellcheck="false"></textarea>
+      <label class="bulk-label" for="bulk-raw-text">${t("rawText")}</label>
+      <textarea class="bulk-textarea" id="bulk-raw-text" placeholder="${escapeHtml(initialPlaceholder)}" spellcheck="false"></textarea>
       <div class="bulk-sep-row">
         <div class="bulk-sep-field">
           <label class="bulk-label" for="bulk-side-sep">${t("cardSideSep")}</label>
@@ -204,13 +228,13 @@ function openAddCardModal(stackId) {
         </div>
         <div class="bulk-sep-field">
           <label class="bulk-label" for="bulk-card-sep">${t("nextCardSep")}</label>
-          <input type="text" id="bulk-card-sep" value="" maxlength="10" placeholder="newline" />
+          <input type="text" id="bulk-card-sep" value="" maxlength="10" placeholder="${currentLang === 'tr' ? 'yeni satır' : 'newline'}" />
           <div class="bulk-sep-hint">${t("sepHintNext")}</div>
         </div>
       </div>
       <div class="bulk-preview" aria-live="polite">
         <div class="bulk-preview-title">${t("preview")} <span class="bulk-preview-count" id="bulk-preview-count">0</span></div>
-        <div id="bulk-preview-body"><div class="bulk-preview-empty">Add text to preview cards.</div></div>
+        <div id="bulk-preview-body"><div class="bulk-preview-empty">${currentLang === 'tr' ? 'Önizleme için metin ekleyin.' : 'Add text to preview cards.'}</div></div>
       </div>
       <div class="btn-row">
         <button class="btn" type="button" onclick="closeModal()">${t("cancel")}</button>
@@ -220,7 +244,7 @@ function openAddCardModal(stackId) {
 
     <div class="tab-panel" data-tab="file" role="tabpanel">
       <p style="color:var(--fg-muted); font-size:0.85rem; line-height:1.5; margin-bottom:1rem;">
-        Upload a CSV or TSV file. Columns: Front, Back, Tags (optional).
+        ${t("csvUploadHint")}
       </p>
       <input type="file" id="csv-file-input" accept=".csv,.tsv,.txt" style="margin-bottom:1rem;" onchange="handleCsvFileSelected(this)" />
       <div class="bulk-preview" id="csv-preview-box" style="display:none;">
@@ -237,7 +261,18 @@ function openAddCardModal(stackId) {
   const rawEl = currentModalBack.querySelector("#bulk-raw-text");
   const sideEl = currentModalBack.querySelector("#bulk-side-sep");
   const cardEl = currentModalBack.querySelector("#bulk-card-sep");
-  const updatePreview = () => renderBulkPreview(rawEl.value, sideEl.value, cardEl.value);
+
+  const syncPlaceholder = () => {
+    if (rawEl && sideEl && cardEl) {
+      rawEl.placeholder = getBulkPlaceholder(sideEl.value, cardEl.value);
+    }
+  };
+
+  const updatePreview = () => {
+    syncPlaceholder();
+    renderBulkPreview(rawEl.value, sideEl.value, cardEl.value);
+  };
+
   rawEl.addEventListener("input", updatePreview);
   sideEl.addEventListener("input", updatePreview);
   cardEl.addEventListener("input", updatePreview);
@@ -279,7 +314,7 @@ function createCard() {
   const imgA = newCardImgA || (urlAInput ? urlAInput.value.trim() : "");
 
   if (!q || !a || !stackId) {
-    showAlert("Please fill in both front and back.");
+    showAlert(t("fillBothSidesAlert"));
     return;
   }
   const stack = state.stacks.find(s => s.id === stackId);
@@ -325,7 +360,7 @@ function renderBulkPreview(rawText, sideSep, cardSepRaw) {
   countEl.textContent = valid.length;
 
   if (valid.length === 0 && skipped === 0) {
-    bodyEl.innerHTML = '<div class="bulk-preview-empty">Add text to preview cards.</div>';
+    bodyEl.innerHTML = `<div class="bulk-preview-empty">${currentLang === 'tr' ? 'Önizleme için metin ekleyin.' : 'Add text to preview cards.'}</div>`;
     if (importBtn) importBtn.disabled = true;
     return;
   }
@@ -341,10 +376,10 @@ function renderBulkPreview(rawText, sideSep, cardSepRaw) {
     `;
   });
   if (valid.length > 50) {
-    html += `<div style="font-size:0.8rem; color:var(--fg-muted); padding:0.4rem 0;">+ ${valid.length - 50} more cards...</div>`;
+    html += `<div style="font-size:0.8rem; color:var(--fg-muted); padding:0.4rem 0;">+ ${valid.length - 50} ${t("moreCardsHint")}</div>`;
   }
   if (skipped > 0) {
-    html += `<div class="bulk-preview-item bulk-preview-invalid">${skipped} line(s) skipped</div>`;
+    html += `<div class="bulk-preview-item bulk-preview-invalid">${skipped} ${t("linesSkippedHint")}</div>`;
   }
   bodyEl.innerHTML = html;
   if (importBtn) importBtn.disabled = (valid.length === 0);
@@ -393,7 +428,7 @@ function handleCsvFileSelected(input) {
           </div>
         `;
       });
-      previewBody.innerHTML = html || '<div class="bulk-preview-empty">No valid rows found.</div>';
+      previewBody.innerHTML = html || `<div class="bulk-preview-empty">${t("noValidRowsFound")}</div>`;
       if (importBtn) importBtn.disabled = parsedCsvCards.length === 0;
     }
   };
@@ -446,12 +481,12 @@ function openManageCardModal(stackId, cardId) {
   const initialUrlQ = (card.imgQ && !card.imgQ.startsWith("data:")) ? card.imgQ : "";
   const initialUrlA = (card.imgA && !card.imgA.startsWith("data:")) ? card.imgA : "";
 
-  showModal("Manage Card", `
+  showModal(t("manageCard"), `
     <input type="hidden" id="manage-stack-id" value="${escapeHtml(stackId)}" />
     <input type="hidden" id="manage-card-id" value="${escapeHtml(cardId)}" />
 
     <div class="manage-card-section">
-      <span class="manage-card-section-title">Edit Card</span>
+      <span class="manage-card-section-title">${t("editCardInfo")}</span>
       <label for="manage-card-q">${t("front")}</label>
       <input type="text" id="manage-card-q" value="${escapeHtml(card.q)}" />
 
@@ -484,10 +519,10 @@ function openManageCardModal(stackId, cardId) {
     </div>
 
     <div class="manage-card-section danger-zone">
-      <span class="manage-card-section-title" style="color: var(--danger);">Danger Zone</span>
-      <p>Delete this card permanently from the stack and Leitner boxes.</p>
+      <span class="manage-card-section-title" style="color: var(--danger);">${t("dangerZone")}</span>
+      <p>${t("deleteCardHint")}</p>
       <div class="confirm-row" id="delete-confirm-row">
-        <button type="button" class="btn btn-sm btn-danger" onclick="confirmCardDelete()">${t("delete")} Card</button>
+        <button type="button" class="btn btn-sm btn-danger" onclick="confirmCardDelete()">${t("deleteCardBtn")}</button>
       </div>
     </div>
   `, "manage-card-modal");
@@ -511,7 +546,7 @@ function saveCardEdits() {
   const q = qInput.value.trim();
   const a = aInput.value.trim();
   if (!q || !a) {
-    showAlert("Both front and back are required.");
+    showAlert(t("fillBothSidesAlert"));
     return;
   }
 
@@ -627,7 +662,7 @@ function openPasteModal(initialText = "") {
   const parsed = parseLexiReadPayload(initialText);
   const defaultTitle = parsed.title || `LexiRead - ${todayStr}`;
 
-  const libraryOptions = `<option value="">-- None / Yok --</option>` + state.libraries.map(lib => `
+  const libraryOptions = `<option value="">${t("noneOption")}</option>` + state.libraries.map(lib => `
     <option value="${escapeHtml(lib.id)}">${escapeHtml(lib.title)}</option>
   `).join("");
 
@@ -636,22 +671,22 @@ function openPasteModal(initialText = "") {
       ${t("pasteDesc")}
     </p>
 
-    <label for="paste-stack-title">Stack Title</label>
+    <label for="paste-stack-title">${t("stackTitle")}</label>
     <input type="text" id="paste-stack-title" value="${escapeHtml(defaultTitle)}" />
 
-    <label for="paste-stack-lib">Library (Optional)</label>
+    <label for="paste-stack-lib">${t("libraryOptional")}</label>
     <select id="paste-stack-lib">${libraryOptions}</select>
 
     <div class="bulk-preview" id="paste-live-preview" aria-live="polite">
       <div class="bulk-preview-title">${t("preview")} <span class="bulk-preview-count" id="paste-preview-count">0</span></div>
-      <div id="paste-preview-body"><div class="bulk-preview-empty">No cards detected yet.</div></div>
+      <div id="paste-preview-body"><div class="bulk-preview-empty">${t("noCardsDetected")}</div></div>
     </div>
 
     <details style="margin-bottom:1rem;">
       <summary style="font-size:0.82rem; font-weight:700; color:var(--fg-muted); cursor:pointer; margin-bottom:0.4rem;">
         ${t("editRaw")}
       </summary>
-      <textarea class="bulk-textarea" id="paste-raw-text" placeholder="Paste LexiRead JSON or text here..." spellcheck="false">${escapeHtml(initialText)}</textarea>
+      <textarea class="bulk-textarea" id="paste-raw-text" placeholder="${t("pasteInputPlaceholder")}" spellcheck="false">${escapeHtml(initialText)}</textarea>
     </details>
 
     <div class="btn-row">
@@ -672,7 +707,7 @@ function openPasteModal(initialText = "") {
     countEl.textContent = currentParsed.cards.length;
 
     if (currentParsed.cards.length === 0) {
-      bodyEl.innerHTML = '<div class="bulk-preview-empty">Paste LexiRead JSON or text above to preview cards.</div>';
+      bodyEl.innerHTML = `<div class="bulk-preview-empty">${t("pastePreviewHint")}</div>`;
       if (createBtn) createBtn.disabled = true;
       return;
     }
@@ -688,7 +723,7 @@ function openPasteModal(initialText = "") {
       `;
     });
     if (currentParsed.cards.length > 50) {
-      html += `<div style="font-size:0.8rem; color:var(--fg-muted); padding:0.4rem 0;">+ ${currentParsed.cards.length - 50} more cards...</div>`;
+      html += `<div style="font-size:0.8rem; color:var(--fg-muted); padding:0.4rem 0;">+ ${currentParsed.cards.length - 50} ${t("moreCardsHint")}</div>`;
     }
     bodyEl.innerHTML = html;
     if (createBtn) createBtn.disabled = (currentParsed.cards.length === 0);
@@ -705,13 +740,13 @@ function executePasteStackCreate() {
 
   const title = titleInput ? titleInput.value.trim() : "";
   if (!title) {
-    showAlert("Please enter a stack title.");
+    showAlert(t("enterStackTitleAlert"));
     return;
   }
 
   const parsed = parseLexiReadPayload(rawEl ? rawEl.value : "");
   if (parsed.cards.length === 0) {
-    showAlert("No valid cards found in input.");
+    showAlert(t("noValidCardsAlert"));
     return;
   }
 
@@ -727,7 +762,7 @@ function executePasteStackCreate() {
   const newStack = {
     id: generateId("stack"),
     title,
-    description: `Created from LexiRead (${newCards.length} cards)`,
+    description: `${t("createdFromLexiRead")} (${newCards.length} ${t("cardsCount")})`,
     libraryId: (libInput && libInput.value) ? libInput.value : null,
     cards: newCards,
     correctBox: [],

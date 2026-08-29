@@ -28,7 +28,7 @@ function openTypingConfigModal(stackId, source = "all") {
     </select>
     <div class="btn-row">
       <button class="btn" type="button" onclick="closeModal()">${t("cancel")}</button>
-      <button class="btn btn-primary" type="button" onclick="confirmTypingConfig()">Start</button>
+      <button class="btn btn-primary" type="button" onclick="confirmTypingConfig()">${t("startBtn")}</button>
     </div>
   `);
 }
@@ -92,7 +92,7 @@ function renderTypingUI() {
           <button class="btn btn-sm" type="button" onclick="exitTypingSession()">${t("exit")}</button>
         </div>
         <div class="test-progress">
-          <span>Q ${typingSession.index + 1} / ${total}</span>
+          <span>${t("questionLabel")} ${typingSession.index + 1} / ${total}</span>
           <div class="test-progress-bar">
             <div class="test-progress-fill" style="width: ${((typingSession.index) / total) * 100}%"></div>
           </div>
@@ -110,8 +110,8 @@ function renderTypingUI() {
 
         <form id="typing-form" onsubmit="handleTypingSubmit(event);">
           <div class="typing-input-wrap">
-            <input type="text" id="typing-input" class="typing-input" placeholder="${currentLang === 'tr' ? 'Cevabınızı yazın...' : 'Type your answer...'}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
-            <button class="btn btn-primary" type="submit" id="typing-submit-btn">${currentLang === 'tr' ? 'Kontrol Et' : 'Check'}</button>
+            <input type="text" id="typing-input" class="typing-input" placeholder="${t("typeAnswerPlaceholder")}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+            <button class="btn btn-primary" type="submit" id="typing-submit-btn">${t("checkBtn")}</button>
           </div>
         </form>
 
@@ -208,20 +208,20 @@ function handleTypingSubmit(e) {
     inputEl.disabled = true;
     feedbackBox.innerHTML = `
       <div class="typing-feedback correct">
-        <div style="font-weight:800; font-size:1.05rem; margin-bottom:0.4rem;">✓ ${currentLang === 'tr' ? 'Doğru!' : 'Correct!'}</div>
+        <div style="font-weight:800; font-size:1.05rem; margin-bottom:0.4rem;">✓ ${t("correctWord")}</div>
         <div class="typing-diff-row">
           <div class="typing-diff-item">
-            <span class="typing-diff-label">${currentLang === 'tr' ? 'Yazdığınız:' : 'You typed:'}</span>
+            <span class="typing-diff-label">${t("typedAnswer")}</span>
             <span class="typing-diff-val" style="color:var(--success); font-weight:700;">${escapeHtml(typedVal)}</span>
           </div>
           <div class="typing-diff-item">
-            <span class="typing-diff-label">${currentLang === 'tr' ? 'Tam Anlamı:' : 'Full Answer:'}</span>
+            <span class="typing-diff-label">${t("fullMeaning")}</span>
             <span class="typing-diff-val" style="color:var(--fg); font-weight:600;">${escapeHtml(targetAnswer)}</span>
           </div>
         </div>
       </div>
     `;
-    submitBtn.textContent = currentLang === 'tr' ? 'Devam Et →' : 'Continue →';
+    submitBtn.textContent = t("continueBtn");
     submitBtn.focus();
 
     const curIndex = typingSession.index;
@@ -235,20 +235,20 @@ function handleTypingSubmit(e) {
     inputEl.disabled = true;
     feedbackBox.innerHTML = `
       <div class="typing-feedback wrong">
-        <div style="font-weight:800; font-size:1.05rem; color:var(--danger); margin-bottom:0.4rem;">✗ ${currentLang === 'tr' ? 'Yanlış' : 'Incorrect'}</div>
+        <div style="font-weight:800; font-size:1.05rem; color:var(--danger); margin-bottom:0.4rem;">✗ ${t("wrongWord")}</div>
         <div class="typing-diff-row">
           <div class="typing-diff-item">
-            <span class="typing-diff-label">${currentLang === 'tr' ? 'Yazdığınız:' : 'You typed:'}</span>
+            <span class="typing-diff-label">${t("typedAnswer")}</span>
             <span class="typing-diff-val wrong-val">${escapeHtml(typedVal)}</span>
           </div>
           <div class="typing-diff-item">
-            <span class="typing-diff-label">${currentLang === 'tr' ? 'Doğru Cevap:' : 'Correct answer:'}</span>
+            <span class="typing-diff-label">${t("correctAnswer")}</span>
             <span class="typing-diff-val correct-val">${escapeHtml(targetAnswer)}</span>
           </div>
         </div>
       </div>
     `;
-    submitBtn.textContent = currentLang === 'tr' ? 'Devam Et →' : 'Continue →';
+    submitBtn.textContent = t("continueBtn");
     submitBtn.focus();
   }
 }

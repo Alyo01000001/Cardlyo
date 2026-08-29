@@ -28,7 +28,7 @@ function openFlashcardOrderModal(stackId, source = "all") {
     </select>
     <div class="btn-row">
       <button class="btn" type="button" onclick="closeModal()">${t("cancel")}</button>
-      <button class="btn btn-primary" type="button" onclick="confirmFlashcardConfig()">Start</button>
+      <button class="btn btn-primary" type="button" onclick="confirmFlashcardConfig()">${t("startBtn")}</button>
     </div>
   `);
 }
@@ -79,7 +79,7 @@ function renderFlashcardSession() {
     <section class="flashcard-overlay" aria-label="Flashcard review session">
       <div class="flashcard-session">
         <div class="flashcard-session-top">
-          <span>Card ${flashcardSession.index + 1} / ${total}</span>
+          <span>${t("cardLabel")} ${flashcardSession.index + 1} / ${total}</span>
           <div class="flashcard-top-actions">
             ${hasUndo ? `<button class="btn btn-sm" type="button" onclick="undoFlashcardStep()">${t("undo")}</button>` : ""}
             <button class="btn btn-sm" type="button" onclick="finishFlashcardReview(true)">${t("exit")}</button>

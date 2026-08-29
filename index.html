@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Cardlyo — Modern Spaced Repetition</title>
   
   <!-- PWA & Mobile Meta -->
@@ -23,25 +23,30 @@
     </a>
 
     <div class="header-actions">
-      <button class="btn btn-sm" type="button" onclick="triggerPasteImport()" title="Paste LexiRead JSON or cards from clipboard">
-        <span aria-hidden="true">📋</span> <span data-i18n="paste">Paste Stack</span>
+      <button class="btn btn-sm header-action-btn" type="button" onclick="triggerPasteImport()" title="Paste LexiRead JSON or cards from clipboard" aria-label="Paste Stack">
+        <span class="header-btn-icon" aria-hidden="true">📋</span>
+        <span class="header-btn-text" data-i18n="paste">Paste Stack</span>
       </button>
 
-      <button class="btn btn-sm" type="button" onclick="triggerImport()" title="Import Cardlyo JSON">
-        <span aria-hidden="true">↑</span> <span data-i18n="upload">Upload</span>
+      <button class="btn btn-sm header-action-btn" type="button" onclick="triggerImport()" title="Import Cardlyo JSON" aria-label="Upload Backup">
+        <span class="header-btn-icon" aria-hidden="true">📥</span>
+        <span class="header-btn-text" data-i18n="upload">Upload</span>
       </button>
       <input type="file" id="import-file" accept="application/json" style="display:none;" onchange="handleImportFile(this)" />
 
-      <button class="btn btn-sm" type="button" onclick="triggerDownload()" title="Download Full Backup">
-        <span aria-hidden="true">↓</span> <span data-i18n="download">Download</span>
+      <button class="btn btn-sm header-action-btn" type="button" onclick="triggerDownload()" title="Download Full Backup" aria-label="Download Backup">
+        <span class="header-btn-icon" aria-hidden="true">📤</span>
+        <span class="header-btn-text" data-i18n="download">Download</span>
       </button>
 
-      <button class="btn btn-sm" type="button" onclick="toggleLanguage()" title="Switch Language">
-        <span aria-hidden="true">🌐</span> <span id="lang-label">TR</span>
+      <button class="btn btn-sm header-action-btn" type="button" onclick="toggleLanguage()" title="Switch Language" aria-label="Switch Language">
+        <span class="header-btn-icon" aria-hidden="true">🌐</span>
+        <span class="header-btn-text" id="lang-label">TR</span>
       </button>
 
-      <button class="btn btn-sm" type="button" onclick="toggleTheme()" aria-label="Toggle Theme">
-        <span id="theme-icon" aria-hidden="true">◑</span> <span id="theme-label" data-i18n="theme">Dark</span>
+      <button class="btn btn-sm header-action-btn" type="button" onclick="toggleTheme()" title="Toggle Theme" aria-label="Toggle Theme">
+        <span class="header-btn-icon" id="theme-icon" aria-hidden="true">◑</span>
+        <span class="header-btn-text" id="theme-label" data-i18n="theme">Dark</span>
       </button>
     </div>
   </header>

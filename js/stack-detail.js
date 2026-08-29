@@ -31,7 +31,7 @@ function openLibraryDetail(libraryId) {
     <div style="flex:1; min-width:0;">
       <div class="editable-meta-wrap">
         <h1 class="section-title">${escapeHtml(library.title)}</h1>
-        <button type="button" class="meta-edit-toggle" onclick="openEditLibraryModal('${escapeHtml(library.id)}')" title="Edit library">✎</button>
+        <button type="button" class="meta-edit-toggle" onclick="openEditLibraryModal('${escapeHtml(library.id)}')" title="${t("editLibrary")}">✎</button>
       </div>
       <p class="stack-view-description">${escapeHtml(getLibraryDescription(library))}</p>
     </div>
@@ -42,7 +42,7 @@ function openLibraryDetail(libraryId) {
   actions.className = "stack-view-actions";
   actions.innerHTML = `
     <button class="btn btn-sm btn-primary" onclick="openAddStackModal('${escapeHtml(library.id)}')">+ ${t("addStack")}</button>
-    <button class="btn btn-sm btn-danger" onclick="deleteLibrary('${escapeHtml(library.id)}')">${t("delete")} Library</button>
+    <button class="btn btn-sm btn-danger" onclick="deleteLibrary('${escapeHtml(library.id)}')">${t("deleteLibrary")}</button>
   `;
   root.appendChild(actions);
 
@@ -63,10 +63,10 @@ function openLibraryDetail(libraryId) {
 
 function openAddLibraryModal() {
   showModal(t("newLibrary"), `
-    <label for="new-library-title">Library Title</label>
-    <input type="text" id="new-library-title" placeholder="e.g., Languages" value="" />
-    <label for="new-library-description">Description</label>
-    <textarea id="new-library-description" rows="3" placeholder="What kind of stacks live here?"></textarea>
+    <label for="new-library-title">${t("libraryTitle")}</label>
+    <input type="text" id="new-library-title" placeholder="${currentLang === 'tr' ? 'örn: Diller' : 'e.g., Languages'}" value="" />
+    <label for="new-library-description">${t("description")}</label>
+    <textarea id="new-library-description" rows="3" placeholder="${t("libraryDescPlaceholder")}"></textarea>
     <div class="btn-row">
       <button class="btn" type="button" onclick="closeModal()">${t("cancel")}</button>
       <button class="btn btn-primary" type="button" onclick="createLibrary()">${t("create")}</button>
@@ -80,7 +80,7 @@ function createLibrary() {
   const title = titleInput ? titleInput.value.trim() : "";
   const description = descInput ? descInput.value.trim() : "";
   if (!title) {
-    showAlert("Please enter a library title.");
+    showAlert(t("enterLibraryTitleAlert"));
     return;
   }
   state.libraries.push({ id: generateId("lib"), title, description });
@@ -92,11 +92,11 @@ function createLibrary() {
 function openEditLibraryModal(libraryId) {
   const library = state.libraries.find(l => l.id === libraryId);
   if (!library) return;
-  showModal("Edit Library", `
+  showModal(t("editLibrary"), `
     <input type="hidden" id="edit-library-id" value="${escapeHtml(libraryId)}" />
-    <label for="edit-library-title">Library Title</label>
+    <label for="edit-library-title">${t("libraryTitle")}</label>
     <input type="text" id="edit-library-title" value="${escapeHtml(library.title)}" />
-    <label for="edit-library-description">Description</label>
+    <label for="edit-library-description">${t("description")}</label>
     <textarea id="edit-library-description" rows="3">${escapeHtml(library.description || "")}</textarea>
     <div class="btn-row">
       <button class="btn" type="button" onclick="closeModal()">${t("cancel")}</button>
@@ -114,7 +114,7 @@ function saveLibraryEdit() {
 
   const newTitle = titleInput ? titleInput.value.trim() : "";
   if (!newTitle) {
-    showAlert("Library title cannot be empty.");
+    showAlert(t("libraryTitleEmptyAlert"));
     return;
   }
   library.title = newTitle;
@@ -127,7 +127,7 @@ function saveLibraryEdit() {
 }
 
 function deleteLibrary(libraryId) {
-  if (!confirm("Delete this library? Its stacks will move back to the main dashboard.")) return;
+  if (!confirm(t("deleteLibraryConfirm"))) return;
   state.stacks.forEach(stack => {
     if (stack.libraryId === libraryId) stack.libraryId = null;
   });
@@ -286,7 +286,9 @@ function renderCardsTable(stack, tableWrap) {
     return true;
   });
 
-  tableWrap.innerHTML = `
+  const emptyMessage = stack.cards.length === 0 ? t("noCardsYet") : t("noMatchingCards");
+
+  const tableHtml = `
     <table class="cards-table" aria-label="Cards table">
       <thead>
         <tr>
@@ -330,20 +332,61 @@ function renderCardsTable(stack, tableWrap) {
               </td>
             </tr>
           `;
-        }).join("") || `<tr><td colspan="4" style="text-align:center; color:var(--fg-muted);">${stack.cards.length === 0 ? t("noCardsYet") : t("noMatchingCards")}</td></tr>`}
+        }).join("") || `<tr><td colspan="4" style="text-align:center; color:var(--fg-muted);">${emptyMessage}</td></tr>`}
       </tbody>
     </table>
   `;
+
+  const mobileListHtml = `
+    <div class="mobile-cards-list" aria-label="Cards mobile list">
+      ${filteredCards.map(c => {
+        const inCorrect = stack.correctBox.includes(c.id);
+        const inWrong = stack.wrongBox.includes(c.id);
+        let status = t("filterUntested");
+        let statusClass = "";
+        if (inCorrect) { status = t("filterCorrect"); statusClass = "success"; }
+        else if (inWrong) { status = t("filterWrong"); statusClass = "danger"; }
+        
+        const tagsHtml = (c.tags || []).map(tg => `<span class="card-tag-badge">#${escapeHtml(tg)}</span>`).join("");
+        const imgQHtml = c.imgQ ? `<img src="${escapeHtml(c.imgQ)}" class="mobile-card-img" alt="Front image" />` : "";
+        const imgAHtml = c.imgA ? `<img src="${escapeHtml(c.imgA)}" class="mobile-card-img" alt="Back image" />` : "";
+
+        return `
+          <article class="mobile-card-item">
+            <div class="mobile-card-top">
+              <span class="meta-badge ${statusClass}">${status}</span>
+              <button class="btn btn-sm" type="button" onclick="openManageCardModal('${escapeHtml(stack.id)}', '${escapeHtml(c.id)}')" aria-label="Edit card">${t("edit")}</button>
+            </div>
+            <div class="mobile-card-body">
+              <div class="mobile-card-side mobile-card-front">
+                <span class="mobile-card-label">${t("front")}</span>
+                ${imgQHtml}
+                <div class="mobile-card-text">${renderMarkdown(c.q)}</div>
+              </div>
+              <div class="mobile-card-side mobile-card-back">
+                <span class="mobile-card-label">${t("back")}</span>
+                ${imgAHtml}
+                <div class="mobile-card-text">${renderMarkdown(c.a)}</div>
+              </div>
+            </div>
+            ${tagsHtml ? `<div class="mobile-card-tags">${tagsHtml}</div>` : ""}
+          </article>
+        `;
+      }).join("") || `<div class="empty-state" style="padding:2rem 1rem;"><h3>${emptyMessage}</h3></div>`}
+    </div>
+  `;
+
+  tableWrap.innerHTML = tableHtml + mobileListHtml;
 }
 
 function openAddStackModal(libraryId = null) {
   showModal(t("addStack"), `
     <input type="hidden" id="new-stack-library-id" value="${escapeHtml(libraryId || "")}" />
-    <label for="new-stack-title">Stack Title</label>
-    <input type="text" id="new-stack-title" placeholder="e.g., Spanish Vocabulary" value="" />
+    <label for="new-stack-title">${t("stackTitle")}</label>
+    <input type="text" id="new-stack-title" placeholder="${currentLang === 'tr' ? 'örn: İspanyolca Kelimeler' : 'e.g., Spanish Vocabulary'}" value="" />
     
-    <label for="new-stack-description">Description</label>
-    <textarea id="new-stack-description" rows="3" placeholder="What will you study in this stack?"></textarea>
+    <label for="new-stack-description">${t("description")}</label>
+    <textarea id="new-stack-description" rows="3" placeholder="${t("stackDescPlaceholder")}"></textarea>
 
     <div class="btn-row">
       <button class="btn" onclick="closeModal()">${t("cancel")}</button>
@@ -361,7 +404,7 @@ function createStack() {
   const description = descriptionInput ? descriptionInput.value.trim() : "";
   const libraryId = libraryIdInput && libraryIdInput.value ? libraryIdInput.value : null;
   if (!title) {
-    showAlert("Please enter a stack title.");
+    showAlert(t("enterStackTitleAlert"));
     return;
   }
   const newStack = {
@@ -387,10 +430,10 @@ function openEditStackModal(stackId) {
   showModal(t("editStack"), `
     <input type="hidden" id="edit-stack-id" value="${escapeHtml(stackId)}" />
     
-    <label for="edit-stack-title">Stack Title</label>
+    <label for="edit-stack-title">${t("stackTitle")}</label>
     <input type="text" id="edit-stack-title" value="${escapeHtml(stack.title)}" />
     
-    <label for="edit-stack-description">Description</label>
+    <label for="edit-stack-description">${t("description")}</label>
     <textarea id="edit-stack-description" rows="3">${escapeHtml(stack.description || "")}</textarea>
 
     <div class="btn-row">
@@ -410,7 +453,7 @@ function saveStackEdit() {
 
   const newTitle = titleInput ? titleInput.value.trim() : "";
   if (!newTitle) {
-    showAlert("Stack title cannot be empty.");
+    showAlert(t("stackTitleEmptyAlert"));
     return;
   }
 
@@ -457,7 +500,7 @@ function duplicateStack(stackId) {
 }
 
 function deleteStack(stackId) {
-  if (!confirm("Delete this stack and all its cards?")) return;
+  if (!confirm(t("deleteStackConfirm"))) return;
   const stack = state.stacks.find(s => s.id === stackId);
   const parentLibraryId = stack ? stack.libraryId : null;
   state.stacks = state.stacks.filter(s => s.id !== stackId);
@@ -491,13 +534,13 @@ function openStackOptionsMenu(stackId) {
   if (!stack) return;
   const isGrouped = !!stack.libraryId;
 
-  showModal("Stack Options", `
+  showModal(t("stackOptions"), `
     <div style="display:grid; gap:0.6rem;">
       <button class="btn" type="button" style="justify-content:flex-start;" onclick="duplicateStack('${escapeHtml(stackId)}'); closeModal();">📋 ${t("duplicateStack")}</button>
       <button class="btn" type="button" style="justify-content:flex-start;" onclick="openExportStackModal('${escapeHtml(stackId)}')">💾 ${t("exportStack")}</button>
       <button class="btn" type="button" style="justify-content:flex-start;" onclick="shareStackLink('${escapeHtml(stackId)}'); closeModal();">🔗 ${t("shareStack")}</button>
-      <button class="btn" type="button" style="justify-content:flex-start;" onclick="openMoveToLibraryPicker('${escapeHtml(stackId)}')">🗂️ Move to Library</button>
-      ${isGrouped ? `<button class="btn" type="button" style="justify-content:flex-start;" onclick="removeStackFromLibrary('${escapeHtml(stackId)}')">↩ Remove from Library</button>` : ""}
+      <button class="btn" type="button" style="justify-content:flex-start;" onclick="openMoveToLibraryPicker('${escapeHtml(stackId)}')">🗂️ ${t("moveToLibrary")}</button>
+      ${isGrouped ? `<button class="btn" type="button" style="justify-content:flex-start;" onclick="removeStackFromLibrary('${escapeHtml(stackId)}')">↩ ${t("removeFromLibrary")}</button>` : ""}
       <button class="btn btn-danger" type="button" style="justify-content:flex-start;" onclick="deleteStack('${escapeHtml(stackId)}'); closeModal();">🗑️ ${t("deleteStack")}</button>
       <button class="btn" type="button" onclick="closeModal()">${t("cancel")}</button>
     </div>
@@ -507,8 +550,8 @@ function openStackOptionsMenu(stackId) {
 function openMoveToLibraryPicker(stackId) {
   const libraries = state.libraries;
   if (libraries.length === 0) {
-    showModal("Move to Library", `
-      <p style="color:var(--fg-muted); margin-bottom:1.1rem;">You don't have any libraries yet.</p>
+    showModal(t("moveToLibrary"), `
+      <p style="color:var(--fg-muted); margin-bottom:1.1rem;">${t("noLibrariesYet")}</p>
       <div class="btn-row">
         <button class="btn" type="button" onclick="closeModal()">${t("cancel")}</button>
         <button class="btn btn-primary" type="button" onclick="closeModal(); openAddLibraryModal();">${t("newLibrary")}</button>
@@ -521,7 +564,7 @@ function openMoveToLibraryPicker(stackId) {
     <button class="btn" type="button" style="justify-content:flex-start;" onclick="moveStackToLibrary('${escapeHtml(stackId)}', '${escapeHtml(library.id)}')">🗂️ ${escapeHtml(library.title)}</button>
   `).join("");
 
-  showModal("Move to Library", `
+  showModal(t("moveToLibrary"), `
     <div style="display:grid; gap:0.5rem; max-height:260px; overflow-y:auto; margin-bottom:0.9rem;">${options}</div>
     <div class="btn-row"><button class="btn" type="button" onclick="closeModal()">${t("cancel")}</button></div>
   `);

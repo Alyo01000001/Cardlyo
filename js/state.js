@@ -88,7 +88,7 @@ function handleImportFile(input) {
     try {
       const parsed = JSON.parse(e.target.result);
       if (!parsed.stacks || !Array.isArray(parsed.stacks)) {
-        showAlert("Invalid JSON file: missing 'stacks' array.");
+        showAlert(t("invalidJsonAlert"));
         return;
       }
       const migrated = migrateState(parsed);
@@ -147,7 +147,7 @@ function handleImportFile(input) {
         const newStackId = generateId("stack");
         state.stacks.push({
           id: newStackId,
-          title: importedStack.title || "Untitled Stack",
+          title: importedStack.title || t("untitledStack"),
           description: importedStack.description || "",
           libraryId: targetLibId,
           cards: newCards,
@@ -165,7 +165,7 @@ function handleImportFile(input) {
         : `Added ${addedStacksCount} stack(s)${addedLibsCount > 0 ? ` and ${addedLibsCount} library(ies)` : ""}`;
       showToast(toastMsg);
     } catch (err) {
-      showAlert("Failed to parse JSON file: " + err.message);
+      showAlert(t("parseJsonFailAlert") + err.message);
     }
     input.value = "";
   };
@@ -204,7 +204,7 @@ function exportStack(stackId) {
 function exportStackCsv(stackId) {
   const stack = state.stacks.find(s => s.id === stackId);
   if (!stack || stack.cards.length === 0) {
-    showAlert("Stack has no cards to export.");
+    showAlert(t("noCardsToExportAlert"));
     return;
   }
 
@@ -251,15 +251,15 @@ function shareStackLink(stackId) {
     
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(shareUrl).then(() => {
-        showToast(currentLang === "tr" ? "Deste linki panoya kopyalandı! Paylaşabilirsiniz." : "Stack link copied to clipboard! Share it with anyone.");
+        showToast(t("shareLinkCopiedToast"));
       }).catch(() => {
-        prompt(currentLang === "tr" ? "Paylaşım linkini kopyalayın:" : "Copy share link:", shareUrl);
+        prompt(t("copyShareLinkPrompt"), shareUrl);
       });
     } else {
-      prompt(currentLang === "tr" ? "Paylaşım linkini kopyalayın:" : "Copy share link:", shareUrl);
+      prompt(t("copyShareLinkPrompt"), shareUrl);
     }
   } catch (e) {
-    showAlert("Failed to create share link: " + e.message);
+    showAlert(t("shareLinkFailAlert") + e.message);
   }
 }
 
@@ -274,7 +274,7 @@ function checkShareImportOnLoad() {
 
     if (!parsed || !parsed.title || !Array.isArray(parsed.cards)) return;
 
-    showModal(currentLang === "tr" ? "Paylaşılan Desteyi İçe Aktar" : "Import Shared Stack", `
+    showModal(t("importSharedStackTitle"), `
       <p style="color:var(--fg); font-weight:700; font-size:1.1rem; margin-bottom:0.4rem;">${escapeHtml(parsed.title)}</p>
       <p style="color:var(--fg-muted); font-size:0.9rem; margin-bottom:1rem;">${escapeHtml(parsed.description || "")}</p>
       <p style="color:var(--primary); font-weight:700; font-size:0.9rem; margin-bottom:1.25rem;">${parsed.cards.length} ${t("cardsCount")}</p>
@@ -304,7 +304,7 @@ function confirmImportSharedStack(encodedJson) {
 
     const newStack = {
       id: generateId("stack"),
-      title: parsed.title || "Shared Stack",
+      title: parsed.title || t("sharedStack"),
       description: parsed.description || "",
       libraryId: null,
       cards: newCards,
@@ -317,8 +317,8 @@ function confirmImportSharedStack(encodedJson) {
     closeModal();
     window.location.hash = "";
     openStackDetail(newStack.id);
-    showToast(currentLang === "tr" ? "Paylaşılan deste eklendi!" : "Shared stack added successfully!");
+    showToast(t("sharedStackAddedToast"));
   } catch (e) {
-    showAlert("Error importing shared stack: " + e.message);
+    showAlert(t("importSharedFailAlert") + e.message);
   }
 }

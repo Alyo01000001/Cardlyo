@@ -13,6 +13,7 @@ function showModal(title, htmlContent, modalClass = "") {
   currentModalBack.setAttribute("aria-modal", "true");
   currentModalBack.innerHTML = `
     <div class="modal ${escapeHtml(modalClass)}" role="document">
+      <div class="bottom-sheet-handle" aria-hidden="true"></div>
       <h2>${escapeHtml(title)}</h2>
       <div>${htmlContent}</div>
     </div>
@@ -37,9 +38,9 @@ function showAlert(message) {
   modalBack.className = "modal-backdrop";
   modalBack.innerHTML = `
     <div class="alert-modal" role="document">
-      <h3>Alert</h3>
+      <h3>${t("alertTitle")}</h3>
       <p>${escapeHtml(message)}</p>
-      <button class="btn btn-primary" onclick="this.closest('.modal-backdrop').remove()" style="margin-top:1.25rem;">OK</button>
+      <button class="btn btn-primary" onclick="this.closest('.modal-backdrop').remove()" style="margin-top:1.25rem;">${t("okBtn")}</button>
     </div>
   `;
   document.body.appendChild(modalBack);

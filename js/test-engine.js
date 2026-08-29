@@ -36,7 +36,7 @@ function openTestConfigModal(stackId, source = "all") {
     </select>
     <div class="btn-row">
       <button class="btn" type="button" onclick="closeModal()">${t("cancel")}</button>
-      <button class="btn btn-primary" type="button" onclick="confirmTestConfig()">Start</button>
+      <button class="btn btn-primary" type="button" onclick="confirmTestConfig()">${t("startBtn")}</button>
     </div>
   `);
 }
@@ -95,7 +95,7 @@ function renderTestUI() {
         <button class="btn btn-sm" type="button" onclick="exitTest()">${t("exit")}</button>
       </div>
       <div class="test-progress" aria-label="Progress">
-        <span>Q ${activeTestIndex + 1} / ${activeTestPool.length}</span>
+        <span>${t("questionLabel")} ${activeTestIndex + 1} / ${activeTestPool.length}</span>
         <div class="test-progress-bar">
           <div class="test-progress-fill" style="width: ${((activeTestIndex) / activeTestPool.length) * 100}%"></div>
         </div>
@@ -188,7 +188,7 @@ function showTestResults() {
     <article class="test-card test-results">
       <h3>${t("sessionComplete")}</h3>
       <div class="score-ring">${activeTestScore} / ${total}</div>
-      <p>${activeTestScore} / ${total} correct</p>
+      <p>${activeTestScore} / ${total} ${currentLang === 'tr' ? 'doğru' : 'correct'}</p>
       <div style="display:flex; gap:0.75rem; justify-content:center;">
         <button class="btn btn-primary" onclick="openStackDetail('${escapeHtml(completedStackId)}')">${t("returnToStack")}</button>
         <button class="btn" onclick="openTestConfigModal('${escapeHtml(completedStackId)}', '${restartSource}')">${t("restartTest")}</button>

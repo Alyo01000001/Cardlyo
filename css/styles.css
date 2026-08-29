@@ -687,6 +687,74 @@ table.cards-table tbody tr:hover { background: var(--surface-2); }
 .meta-badge.success { color: var(--success); border-color: rgba(16,185,129,0.2); background: var(--success-soft); }
 .meta-badge.danger { color: var(--danger); border-color: rgba(239,68,68,0.2); background: var(--danger-soft); }
 
+/* Mobile Cards List */
+.mobile-cards-list {
+  display: none;
+}
+.mobile-card-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1.1rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+.mobile-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.mobile-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+.mobile-card-side {
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 0.9rem;
+  border-left: 3px solid var(--border);
+}
+.mobile-card-front {
+  border-left-color: var(--primary);
+}
+.mobile-card-back {
+  border-left-color: var(--success);
+}
+.mobile-card-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fg-subtle);
+  margin-bottom: 0.35rem;
+}
+.mobile-card-text {
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: var(--fg);
+  line-height: 1.45;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+.mobile-card-img {
+  max-height: 140px;
+  width: auto;
+  border-radius: 8px;
+  margin-bottom: 0.4rem;
+  object-fit: contain;
+}
+.mobile-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
 /* Leitner Stat Boxes */
 .stat-boxes {
   display: grid;
@@ -1201,6 +1269,14 @@ table.cards-table tbody tr:hover { background: var(--surface-2); }
   box-shadow: var(--shadow-lg);
   animation: fadeUp 220ms ease;
 }
+.bottom-sheet-handle {
+  display: none;
+  width: 40px;
+  height: 4.5px;
+  background: var(--border);
+  border-radius: 999px;
+  margin: -0.5rem auto 1rem auto;
+}
 .modal h2 {
   font-family: var(--font-display);
   font-size: 1.25rem;
@@ -1465,35 +1541,254 @@ table.cards-table tbody tr:hover { background: var(--surface-2); }
   margin-top: auto;
 }
 
-/* Responsive */
+/* ============================================
+   RESPONSIVE - MOBILE & TOUCH OPTIMIZATION
+============================================ */
 @media (max-width: 768px) {
+  /* 1. Header */
   .site-header {
-    height: auto;
-    min-height: 64px;
-    flex-wrap: wrap;
-    gap: 0.6rem;
-    padding: 0.75rem 1rem;
-  }
-  .logo { font-size: 1.15rem; }
-  .header-actions {
-    width: 100%;
+    height: 58px;
+    min-height: 58px;
+    padding: 0 0.85rem;
+    flex-wrap: nowrap;
+    gap: 0.5rem;
     justify-content: space-between;
-    order: 3;
   }
-  .header-actions .btn {
+  .logo {
+    font-size: 1.12rem;
+    gap: 0.45rem;
+  }
+  .logo-icon-img {
+    width: 28px;
+    height: 28px;
+  }
+  .header-actions {
+    width: auto;
+    gap: 0.35rem;
+  }
+  .header-action-btn {
+    min-width: 38px;
+    height: 38px;
+    padding: 0;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+  }
+  .header-btn-text {
+    display: none;
+  }
+  .header-btn-icon {
+    font-size: 1.15rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 2. Main Layout */
+  .main-wrap {
+    padding: 1rem 0.85rem;
+  }
+  .section-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  .section-header .btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+  .dashboard-grid, .library-grid {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+
+  /* 3. Stack Detail & Actions */
+  .stack-view-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  .editable-meta-wrap {
+    justify-content: space-between;
+    width: 100%;
+  }
+  .stack-header-tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+  .stack-header-tools .btn {
     flex: 1 1 auto;
-    min-height: 40px;
-    padding: 0.45rem;
-    font-size: 0.76rem;
+    justify-content: center;
+    min-height: 38px;
+    font-size: 0.8rem;
+    padding: 0.4rem 0.6rem;
   }
-  .main-wrap { padding: 1.25rem 1rem; }
-  .dashboard-grid, .library-grid { grid-template-columns: 1fr; }
-  .stat-boxes { grid-template-columns: 1fr; }
-  .modal-backdrop { padding: 0.75rem; align-items: flex-start; }
-  .modal { max-width: 100%; padding: 1.25rem; }
-  .flashcard-overlay { padding: 0.75rem; }
-  .flashcard-scene { height: clamp(230px, 48vh, 380px); }
-  .flashcard-face-text { font-size: clamp(1.25rem, 6.5vw, 1.9rem); }
-  .stack-view-header { flex-direction: column; align-items: flex-start; }
-  .stack-view-actions .btn { width: 100%; }
+
+  .stat-boxes {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+  }
+  .stat-box {
+    padding: 0.85rem;
+    gap: 0.2rem;
+  }
+  .stat-box-value {
+    font-size: 1.6rem;
+  }
+
+  /* 2x2 Action Buttons Grid */
+  .stack-view-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+  }
+  .stack-view-actions .btn {
+    width: 100%;
+    min-height: 46px;
+    padding: 0.65rem 0.4rem;
+    font-size: 0.86rem;
+    justify-content: center;
+    text-align: center;
+    font-weight: 700;
+  }
+
+  /* Search & Filter Bar */
+  .search-filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.6rem;
+  }
+  .filter-select {
+    width: 100%;
+    min-height: 42px;
+  }
+
+  /* 4. Switch Table to Mobile Cards List */
+  .cards-table-wrap {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+  }
+  .cards-table {
+    display: none !important;
+  }
+  .mobile-cards-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  /* 5. Bottom Sheet Modals */
+  .modal-backdrop {
+    padding: 0;
+    align-items: flex-end;
+  }
+  .modal {
+    max-width: 100%;
+    width: 100%;
+    border-radius: 22px 22px 0 0;
+    max-height: 88dvh;
+    max-height: 88vh;
+    padding: 1.25rem 1.15rem calc(1.25rem + env(safe-area-inset-bottom, 0px));
+    animation: slideUpSheet 260ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .bottom-sheet-handle {
+    display: block;
+  }
+  .alert-modal {
+    width: calc(100% - 2rem);
+    margin: auto auto calc(1.5rem + env(safe-area-inset-bottom, 0px)) auto;
+  }
+  .modal .btn-row {
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+  }
+  .modal .btn-row .btn {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  /* 6. Flashcard Review Engine */
+  .flashcard-overlay {
+    padding: 0.6rem 0.6rem calc(0.8rem + env(safe-area-inset-bottom, 0px));
+    height: 100dvh;
+    height: 100vh;
+  }
+  .flashcard-session {
+    height: 100%;
+    max-height: 100%;
+    justify-content: space-between;
+  }
+  .flashcard-scene {
+    height: clamp(260px, 48dvh, 400px);
+  }
+  .flashcard-actions {
+    gap: 0.6rem;
+  }
+  .flashcard-decision {
+    min-height: 52px;
+    font-size: 0.95rem;
+    border-radius: var(--radius-sm);
+  }
+
+  /* 7. Multiple Choice Test Engine */
+  .test-overlay {
+    padding: 0.6rem 0.6rem calc(0.8rem + env(safe-area-inset-bottom, 0px));
+    height: 100dvh;
+    height: 100vh;
+  }
+  .test-card {
+    padding: 1.25rem 1rem;
+    max-height: 100%;
+    overflow-y: auto;
+  }
+  .test-options {
+    gap: 0.6rem;
+  }
+  .test-option-btn {
+    min-height: 52px;
+    padding: 0.85rem 1rem;
+    font-size: 0.95rem;
+  }
+
+  /* 8. Typing Engine */
+  .typing-overlay {
+    padding: 0.6rem 0.6rem calc(0.8rem + env(safe-area-inset-bottom, 0px));
+    height: 100dvh;
+    height: 100vh;
+  }
+  .typing-card {
+    padding: 1.25rem 1rem;
+    max-height: 100%;
+    overflow-y: auto;
+  }
+  .typing-input-wrap {
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .typing-input {
+    font-size: 1.05rem;
+    min-height: 48px;
+  }
+  .typing-input-wrap .btn {
+    width: 100%;
+    min-height: 48px;
+    font-size: 1rem;
+  }
+}
+
+@keyframes slideUpSheet {
+  from {
+    transform: translateY(100%);
+    opacity: 0.6;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
