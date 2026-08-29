@@ -53,8 +53,13 @@ function confirmTypingConfig() {
   runTypingSession(stack, pool, face);
 }
 
-function runTypingSession(stack, pool, face = "front") {
-  closeModal();
+function runTypingSession(stack, pool, face = "front", pushHistory = true) {
+  dismissModalSilently();
+
+  if (pushHistory && typeof replaceAppState === "function") {
+    replaceAppState({ view: "study", stackId: stack.id, mode: "typing" });
+  }
+
   typingSession = {
     stackId: stack.id,
     cards: pool,
@@ -72,8 +77,13 @@ function runTypingSession(stack, pool, face = "front") {
 function exitTypingSession() {
   const stackId = typingSession ? typingSession.stackId : "";
   typingSession = null;
-  if (stackId) openStackDetail(stackId);
-  else renderApp();
+  if (history.state && history.state.view === "study") {
+    history.back();
+  } else if (stackId) {
+    openStackDetail(stackId);
+  } else {
+    renderApp();
+  }
 }
 
 function renderTypingUI() {

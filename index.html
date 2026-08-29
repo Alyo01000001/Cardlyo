@@ -28,26 +28,12 @@
         <span class="header-btn-text" data-i18n="paste">Paste Stack</span>
       </button>
 
-      <button class="btn btn-sm header-action-btn" type="button" onclick="triggerImport()" title="Import Cardlyo JSON" aria-label="Upload Backup">
-        <span class="header-btn-icon" aria-hidden="true">📥</span>
-        <span class="header-btn-text" data-i18n="upload">Upload</span>
+      <button class="btn btn-sm header-action-btn" type="button" onclick="openSettingsModal()" title="Settings" aria-label="Settings">
+        <span class="header-btn-icon" aria-hidden="true">⚙️</span>
+        <span class="header-btn-text" data-i18n="settings">Settings</span>
       </button>
+
       <input type="file" id="import-file" accept="application/json" style="display:none;" onchange="handleImportFile(this)" />
-
-      <button class="btn btn-sm header-action-btn" type="button" onclick="triggerDownload()" title="Download Full Backup" aria-label="Download Backup">
-        <span class="header-btn-icon" aria-hidden="true">📤</span>
-        <span class="header-btn-text" data-i18n="download">Download</span>
-      </button>
-
-      <button class="btn btn-sm header-action-btn" type="button" onclick="toggleLanguage()" title="Switch Language" aria-label="Switch Language">
-        <span class="header-btn-icon" aria-hidden="true">🌐</span>
-        <span class="header-btn-text" id="lang-label">TR</span>
-      </button>
-
-      <button class="btn btn-sm header-action-btn" type="button" onclick="toggleTheme()" title="Toggle Theme" aria-label="Toggle Theme">
-        <span class="header-btn-icon" id="theme-icon" aria-hidden="true">◑</span>
-        <span class="header-btn-text" id="theme-label" data-i18n="theme">Dark</span>
-      </button>
     </div>
   </header>
 

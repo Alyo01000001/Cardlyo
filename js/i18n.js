@@ -163,7 +163,15 @@ const translations = {
     importSharedFailAlert: "Error importing shared stack: ",
     moreCardsHint: "more cards...",
     linesSkippedHint: "line(s) skipped",
-    noValidRowsFound: "No valid rows found."
+    noValidRowsFound: "No valid rows found.",
+    settings: "Settings",
+    settingsDesc: "Preferences, appearance & backup",
+    languageSetting: "Language",
+    themeSetting: "Theme",
+    backupSetting: "Backup & Data",
+    uploadBackup: "Import Backup (JSON)",
+    downloadBackup: "Export All Data (JSON)",
+    options: "Options"
   },
   tr: {
     paste: "Panodan Ekle",
@@ -326,7 +334,15 @@ const translations = {
     importSharedFailAlert: "Paylaşılan deste içe aktarılırken hata: ",
     moreCardsHint: "kart daha...",
     linesSkippedHint: "satır atlandı",
-    noValidRowsFound: "Geçerli satır bulunamadı."
+    noValidRowsFound: "Geçerli satır bulunamadı.",
+    settings: "Ayarlar",
+    settingsDesc: "Tercihler, görünüm ve yedekleme",
+    languageSetting: "Uygulama Dili",
+    themeSetting: "Görünüm Teması",
+    backupSetting: "Veri & Yedekleme",
+    uploadBackup: "Yedek Dosyası Yükle (JSON)",
+    downloadBackup: "Tüm Verileri İndir (JSON)",
+    options: "Seçenekler"
   }
 };
 
@@ -340,7 +356,8 @@ function t(key) {
 function toggleLanguage() {
   currentLang = currentLang === "en" ? "tr" : "en";
   localStorage.setItem("cardlyo_lang", currentLang);
-  document.getElementById("lang-label").textContent = currentLang === "en" ? "TR" : "EN";
+  const langLabel = document.getElementById("lang-label");
+  if (langLabel) langLabel.textContent = currentLang === "en" ? "TR" : "EN";
   applyStaticI18n();
   if (typeof currentLibraryId !== "undefined" && currentLibraryId) openLibraryDetail(currentLibraryId);
   else if (typeof activeStackDetailId !== "undefined" && activeStackDetailId) openStackDetail(activeStackDetailId);

@@ -61,8 +61,13 @@ function confirmTestConfig() {
   runTestSession(stack, pool, source === "wrong" ? "wrongBox" : "main", face);
 }
 
-function runTestSession(stack, pool, source, face = "front") {
-  closeModal();
+function runTestSession(stack, pool, source, face = "front", pushHistory = true) {
+  dismissModalSilently();
+
+  if (pushHistory && typeof replaceAppState === "function") {
+    replaceAppState({ view: "study", stackId: stack.id, mode: "test" });
+  }
+
   activeTestStack = stack;
   activeTestPool = pool.map(c => ({ ...c }));
   activeTestSource = source;
@@ -78,8 +83,13 @@ function exitTest() {
   activeTestPool = [];
   activeTestIndex = 0;
   activeTestScore = 0;
-  if (stackId) openStackDetail(stackId);
-  else renderApp();
+  if (history.state && history.state.view === "study") {
+    history.back();
+  } else if (stackId) {
+    openStackDetail(stackId);
+  } else {
+    renderApp();
+  }
 }
 
 function renderTestUI() {

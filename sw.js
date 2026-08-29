@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cardlyo-cache-v3';
+const CACHE_NAME = 'cardlyo-cache-v6';
 const ASSETS = [
   './',
   './index.html',

@@ -41,7 +41,7 @@ function confirmFlashcardConfig() {
   startFlashcardSession(stackId, order, source, face);
 }
 
-function startFlashcardSession(stackId, order, source = "all", face = "front") {
+function startFlashcardSession(stackId, order, source = "all", face = "front", pushHistory = true) {
   const stack = state.stacks.find(s => s.id === stackId);
   const cards = stack ? getReviewPool(stack, source) : [];
   if (!stack || cards.length === 0) {
@@ -49,7 +49,11 @@ function startFlashcardSession(stackId, order, source = "all", face = "front") {
     return;
   }
   if (order === "random") shuffleCards(cards);
-  closeModal();
+  dismissModalSilently();
+
+  if (pushHistory && typeof replaceAppState === "function") {
+    replaceAppState({ view: "study", stackId, mode: "flashcard" });
+  }
 
   flashcardSession = {
     stackId,
@@ -209,7 +213,11 @@ function finishFlashcardReview(cancelled) {
   flashcardSession = null;
 
   if (cancelled) {
-    openStackDetail(completed.stackId);
+    if (history.state && history.state.view === "study") {
+      history.back();
+    } else {
+      openStackDetail(completed.stackId);
+    }
     return;
   }
 

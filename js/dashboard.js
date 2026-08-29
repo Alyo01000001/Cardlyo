@@ -20,15 +20,23 @@ function buildDashboardStackCard(stack) {
   card.setAttribute("aria-label", `Stack: ${stack.title}`);
 
   card.innerHTML = `
-    <button type="button" class="dashboard-stack-open" aria-label="Open stack: ${escapeHtml(stack.title)}">
+    <div class="dashboard-stack-open" role="button" tabindex="0" aria-label="Open stack: ${escapeHtml(stack.title)}">
       <span class="dashboard-stack-title">${escapeHtml(stack.title)}</span>
       <span class="dashboard-stack-description">${escapeHtml(getStackDescription(stack))}</span>
       <span class="dashboard-stack-badge">${stack.cards.length} ${t("cardsCount")}</span>
-    </button>
+    </div>
     <button type="button" class="stack-kebab" aria-label="Options for ${escapeHtml(stack.title)}" title="Stack options">⋮</button>
   `;
 
-  card.querySelector(".dashboard-stack-open").addEventListener("click", () => openStackDetail(stack.id));
+  const openArea = card.querySelector(".dashboard-stack-open");
+  openArea.addEventListener("click", () => openStackDetail(stack.id));
+  openArea.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      openStackDetail(stack.id);
+    }
+  });
+
   card.querySelector(".stack-kebab").addEventListener("click", (event) => {
     event.stopPropagation();
     openStackOptionsMenu(stack.id);
@@ -42,23 +50,32 @@ function buildDashboardStackCard(stack) {
 
 function buildLibraryCard(library) {
   const stackCount = state.stacks.filter(s => s.libraryId === library.id).length;
-
   const card = document.createElement("div");
   card.className = "library-box";
   card.dataset.libraryId = library.id;
 
+  const stackUnit = currentLang === 'tr' ? 'deste' : (stackCount === 1 ? 'stack' : 'stacks');
+
   card.innerHTML = `
-    <button type="button" class="library-open" aria-label="Open library: ${escapeHtml(library.title)}">
+    <div class="library-open" role="button" tabindex="0" aria-label="Open library: ${escapeHtml(library.title)}">
       <span class="library-icon" aria-hidden="true">📚</span>
       <span class="library-text">
         <span class="library-title">${escapeHtml(library.title)}</span>
         <span class="library-description">${escapeHtml(getLibraryDescription(library))}</span>
-        <span class="library-stack-count">${stackCount} ${t("stacks").toLowerCase()}</span>
+        <span class="library-stack-count">${stackCount} ${stackUnit}</span>
       </span>
-    </button>
+    </div>
   `;
 
-  card.querySelector(".library-open").addEventListener("click", () => openLibraryDetail(library.id));
+  const openArea = card.querySelector(".library-open");
+  openArea.addEventListener("click", () => openLibraryDetail(library.id));
+  openArea.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      openLibraryDetail(library.id);
+    }
+  });
+
   card.addEventListener("dragover", handleLibraryDragOver);
   card.addEventListener("dragleave", handleLibraryDragLeave);
   card.addEventListener("drop", (event) => handleLibraryDrop(event, library.id));
@@ -116,7 +133,6 @@ function refreshDashboardGrids(container) {
         <h1 class="section-title">${t("libraries")}</h1>
         <button class="btn btn-sm btn-primary" onclick="openAddLibraryModal()">${t("newLibrary")}</button>
       </div>
-      <p class="section-sub">${t("librariesSub")}</p>
     </div>
   `;
   contentWrap.appendChild(libHeader);
@@ -136,14 +152,13 @@ function refreshDashboardGrids(container) {
   // Ungrouped Stacks Section
   const stackHeader = document.createElement("div");
   stackHeader.className = "section-header";
-  stackHeader.style.marginTop = "2.5rem";
+  stackHeader.style.marginTop = "2rem";
   stackHeader.innerHTML = `
     <div class="section-heading">
       <div class="section-heading-row">
         <h1 class="section-title">${t("stacks")}</h1>
         <button class="btn btn-sm btn-primary" onclick="openAddStackModal()">${t("addStack")}</button>
       </div>
-      <p class="section-sub">${t("stacksSub")}</p>
     </div>
   `;
   contentWrap.appendChild(stackHeader);

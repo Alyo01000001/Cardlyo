@@ -10,11 +10,15 @@ let activeTagFilter = null;
 // ============================================================
 // LIBRARY DETAIL VIEW
 // ============================================================
-function openLibraryDetail(libraryId) {
+function openLibraryDetail(libraryId, pushHistory = true) {
   const library = state.libraries.find(l => l.id === libraryId);
-  if (!library) { currentLibraryId = null; return renderApp(); }
+  if (!library) { currentLibraryId = null; return renderApp(pushHistory); }
   currentLibraryId = libraryId;
   activeStackDetailId = null;
+
+  if (pushHistory && typeof pushAppState === "function") {
+    pushAppState({ view: "library", id: libraryId });
+  }
 
   const root = document.getElementById("app-root");
   root.innerHTML = "";
@@ -140,12 +144,16 @@ function deleteLibrary(libraryId) {
 // ============================================================
 // STACK DETAIL VIEW
 // ============================================================
-function openStackDetail(stackId) {
+function openStackDetail(stackId, pushHistory = true) {
   activeStackDetailId = stackId;
   const root = document.getElementById("app-root");
   root.innerHTML = "";
   const stack = state.stacks.find(s => s.id === stackId);
-  if (!stack) return renderApp();
+  if (!stack) return renderApp(pushHistory);
+
+  if (pushHistory && typeof pushAppState === "function") {
+    pushAppState({ view: "stack", id: stackId, libraryId: currentLibraryId });
+  }
 
   const back = document.createElement("button");
   back.className = "btn btn-sm stack-view-back";
@@ -156,19 +164,14 @@ function openStackDetail(stackId) {
   };
   root.appendChild(back);
 
-  // Header with Title + ✎ (Modal Edit) + 💾 (Export) + 🔗 (Share) + 🗑️ (Delete)
+  // Header with Title + ⋮ (Options Menu)
   const header = document.createElement("div");
   header.className = "stack-view-header";
   header.innerHTML = `
     <div style="flex:1; min-width:0;">
       <div class="editable-meta-wrap">
         <h1 class="section-title" id="stack-title-display">${escapeHtml(stack.title)}</h1>
-        <div class="stack-header-tools">
-          <button type="button" class="meta-edit-toggle" onclick="openEditStackModal('${escapeHtml(stack.id)}')" title="${t("editStack")}">✎</button>
-          <button type="button" class="btn btn-sm" onclick="openExportStackModal('${escapeHtml(stack.id)}')" title="${t("exportStack")}">💾 ${t("exportStack")}</button>
-          <button type="button" class="btn btn-sm" onclick="shareStackLink('${escapeHtml(stack.id)}')" title="${t("shareStack")}">🔗 ${t("shareStack")}</button>
-          <button type="button" class="btn btn-sm btn-danger" onclick="deleteStack('${escapeHtml(stack.id)}')" title="${t("deleteStack")}">🗑️</button>
-        </div>
+        <button type="button" class="meta-edit-toggle" onclick="openStackOptionsMenu('${escapeHtml(stack.id)}')" title="${t("options")}">⋮</button>
       </div>
       <p class="stack-view-description" id="stack-desc-display">${escapeHtml(getStackDescription(stack))}</p>
     </div>
@@ -536,6 +539,7 @@ function openStackOptionsMenu(stackId) {
 
   showModal(t("stackOptions"), `
     <div style="display:grid; gap:0.6rem;">
+      <button class="btn" type="button" style="justify-content:flex-start;" onclick="openEditStackModal('${escapeHtml(stackId)}')">✎ ${t("editStack")}</button>
       <button class="btn" type="button" style="justify-content:flex-start;" onclick="duplicateStack('${escapeHtml(stackId)}'); closeModal();">📋 ${t("duplicateStack")}</button>
       <button class="btn" type="button" style="justify-content:flex-start;" onclick="openExportStackModal('${escapeHtml(stackId)}')">💾 ${t("exportStack")}</button>
       <button class="btn" type="button" style="justify-content:flex-start;" onclick="shareStackLink('${escapeHtml(stackId)}'); closeModal();">🔗 ${t("shareStack")}</button>
